@@ -30,9 +30,9 @@ jobs:
       run: |
         flake8 . --show-source --statistics
 
-#    - name: Lint with cpplint
-#       run: |
-#         cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive .
+   - name: Lint with cpplint
+      run: |
+        cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive .
     
     - name: Build and install
       run: |
