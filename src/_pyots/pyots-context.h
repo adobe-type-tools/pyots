@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef PYOTS_CONTEXT_H_
-#define PYOTS_CONTEXT_H_
+#ifndef SRC__PYOTS_PYOTS_CONTEXT_H_
+#define SRC__PYOTS_PYOTS_CONTEXT_H_
 
 #include <cstdarg>
 #include <fstream>
@@ -15,7 +15,7 @@ namespace ots {
 
 class PyOTSContext: public OTSContext {
  public:
-  PyOTSContext(int level): level_(level){ }
+  explicit PyOTSContext(int level): level_(level) { }
   std::stringstream msgs;
   bool modified;
 
@@ -42,15 +42,13 @@ class PyOTSContext: public OTSContext {
     msgs << tmp << std::endl;
     free(tmp);
     va_end(va);
-
   }
 
   TableAction GetTableAction(uint32_t tag) {
     switch (tag) {
-
       // ots seems to drop these silently
-      case OTS_TAG('B','A','S','E'):
-      case OTS_TAG('D','S','I','G'):
+      case OTS_TAG('B', 'A', 'S', 'E'):
+      case OTS_TAG('D', 'S', 'I', 'G'):
 
       // from chromium project -- various color tables
       case OTS_TAG('C', 'B', 'D', 'T'):
@@ -67,10 +65,10 @@ class PyOTSContext: public OTSContext {
     }
   }
 
-private:
+ private:
   int level_;
 };
 
 }  // namespace ots
 
-#endif  // PYOTS_CONTEXT_H_
+#endif  // SRC__PYOTS_PYOTS_CONTEXT_H_
