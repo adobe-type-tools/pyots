@@ -57,4 +57,4 @@ jobs:
         for asset in ./wheelhouse/*.whl; do
           assets+=("-a" "$asset")
         done
-        hub release edit "${assets{@]}" "${{ steps.get_tag.outputs.VERSION }}"
+        hub release edit "${assets[@]}" "${{ steps.get_tag.outputs.VERSION }}"
