@@ -44,6 +44,7 @@ jobs:
     - name: Build wheel
       id: build_wheel
       run: |
+        python setup.py download
         python setup.py bdist_wheel
         echo ::set-output name=WHEEL_PATH::$(ls dist/*.whl)
 
