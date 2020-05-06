@@ -380,11 +380,17 @@ pyots_mod = Extension(
     name='_pyots',
     extra_compile_args=['-std=c++11'],
     extra_objects=[
-        'build/meson/libbrotli.a',
-        'build/meson/liblz4.a',
         'build/meson/libots.a',
-        'build/meson/libwoff2.a'],
-    include_dirs=['build/meson/', 'src/ots/include'],
+        'build/meson/libwoff2.a',
+        'build/meson/libbrotli.a',
+        'build/meson/liblz4.a'],
+    libraries=['z'],
+    include_dirs=['build/meson/',
+                  'src/ots/include',
+                  'src/ots/include/src',
+                  'src/ots/third_party/brotli/c/include',
+                  'src/ots/third_party/lz4/lib',
+                  'src/ots/third_party/woff2/include/woff2'],
     sources=['src/_pyots/bindings.cpp'],
 )
 
