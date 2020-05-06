@@ -27,12 +27,10 @@ jobs:
         pip install -r requirements.txt
     
     - name: Lint with flake8
-      run: |
-        flake8 . --show-source --statistics
-
+      run: flake8 . --show-source --statistics
+    
    - name: Lint with cpplint
-      run: |
-        cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive .
+      run: cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive .
     
     - name: Build and install
       run: |
