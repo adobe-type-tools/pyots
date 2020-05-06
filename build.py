@@ -16,6 +16,9 @@ BUILD_ROOT = ROOT / "build"
 BUILD_DIR = BUILD_ROOT / "meson"
 SRC_DIR = ROOT.joinpath("src", "ots")
 
+if 'manylinux' in os.environ.get("AUDITWHEEL_PLAT", ''):
+    os.environ["PATH"] += os.pathsep + os.path.dirname(sys.executable)
+
 TOOLS = {
     "meson": os.environ.get("MESON_EXE", "meson"),
     "ninja": os.environ.get("NINJA_EXE", "ninja"),
