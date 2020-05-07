@@ -42,6 +42,10 @@ jobs:
         pip install wheel
         python setup.py download
 
+    - name: Create Source distribution
+      run: |
+        python setup.py sdist
+
     - name: Build manylinux Python wheels
       id: build_wheels
       uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2010_x86_64
@@ -50,16 +54,16 @@ jobs:
         build-requirements: 'meson ninja'
         system-packages: 'zlib-devel'
 
-    - name: Upload wheels
+    - name: Attach assets to release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        for unaudited in ./wheelhouse/*-linux_x86_64.whl; do
-            rm $unaudited
+        for audited in ./wheelhouse/*-manylinux*.whl; do
+            cp $audited dist
         done
         set -x
         assets=()
-        for asset in ./wheelhouse/*.whl; do
+        for asset in ./dist/*; do
           assets+=("-a" "$asset")
         done
         hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
@@ -70,4 +74,3 @@ jobs:
         user: __token__
         password: ${{ secrets.test_pypi_password }}
         repository_url: https://test.pypi.org/legacy/
-        packages_dir: wheelhouse/
