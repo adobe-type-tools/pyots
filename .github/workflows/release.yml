@@ -55,7 +55,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         for unaudited in ./wheelhouse/*-linux_x86_64.whl; do
-            rm unaudited
+            rm $unaudited
         done
         set -x
         assets=()
