@@ -105,7 +105,7 @@ jobs:
         for asset in ./dist/*.whl; do
             assets+=("-a" "$asset")
         done
-        hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ setps.get_tag.outputs.VERSION }}"
+        hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
 
     - name: Publish wheel to PyPI
       uses: pypa/gh-action-pypi-publish@master
