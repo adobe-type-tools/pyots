@@ -1,5 +1,6 @@
 from distutils.dir_util import mkpath, remove_tree
 from distutils import log
+import io
 import os
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command import build_py
@@ -394,14 +395,33 @@ pyots_mod = Extension(
     sources=['src/_pyots/bindings.cpp'],
 )
 
+with io.open("README.md", encoding="utf-8") as readme:
+    long_description = readme.read()
+
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Testing',
+    'License :: OSI Approved :: BSD License',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: POSIX :: Linux',
+]
+
 setup(
-    author='Josh Hadley',
-    author_email='johadley@adobe.com',
+    author='Adobe Type team & friends',
+    author_email='afdko@adobe.com',
     cmdclass=custom_commands,
+    classifiers=classifiers,
     description='Python wrapper for ot-sanitizer',
     ext_modules=[pyots_mod],
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     name='pyots',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    version='0.1.1',
+    python_requires='>=3.6',
+    use_scm_version=True,
 )
