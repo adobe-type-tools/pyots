@@ -114,13 +114,14 @@ jobs:
       # strip 'refs/tags/' from ref, store in variable called VERSION
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-    - name: Download .whl assets from release # TODO: get .tar.gz source?
+    - name: Download .whl assets from release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         hub release download "${{ steps.get_tag.outputs.VERSION }}"
         mkdir -p dist
         cp *.whl dist # move .whl files to dist for publishing
+        curl -L https://github.com/adobe-type-tools/pyots/archive/${{ steps.get_tag.outputs.VERSION }}.tar.gz -o dist/pyots-${{ steps.get_tag.outputs.VERSION }}.tar.gz
     
     - name: Publish wheels to PyPI
       uses: pypa/gh-action-pypi-publish@master
