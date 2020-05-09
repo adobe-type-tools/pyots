@@ -68,14 +68,9 @@ jobs:
         done
         hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
 
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
-
   do_mac_wheels:
-    name: Build and upload Mac wheels to PyPI
+    needs: [do_release]
+    name: Build Mac wheels
     runs-on: macos-latest
     strategy:
       matrix:
@@ -109,8 +104,27 @@ jobs:
         done
         hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
 
-    - name: Publish wheel to PyPI
+  do_pypi_publish:
+    needs: [do_release, do_mac_wheels]
+    runs-on: ubuntu-latest  # pypa/gh-action-pypi-publish only runs on Linux...
+    
+    steps:
+    - name: Get tag
+      id: get_tag
+      # strip 'refs/tags/' from ref, store in variable called VERSION
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Download .whl and .tar.gz assets from release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        hub release download "${{ steps.get_tag.outputs.VERSION }}" # get release assets
+        mkdir dist
+        cp *.whl dist  # move .whls to dist for publishing
+    
+    - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
+  
