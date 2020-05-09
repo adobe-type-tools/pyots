@@ -423,5 +423,6 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     python_requires='>=3.6',
+    url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
 )
