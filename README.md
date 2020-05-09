@@ -1,5 +1,5 @@
 # pyots (PYthon OT Sanitizer)
-Python wrapper for [OpenType Sanitizer](https://github.com/khaledhosny/ots),also known as just "OTS". It is similar to and partially based on [ots-python](https://github.com/googlefonts/ots-python), but builds OTS as a Python C Extension (instead of as an executable and calling through `subprocess` as ots-python does).
+Python wrapper for [OpenType Sanitizer](https://github.com/khaledhosny/ots), also known as just "OTS". It is similar to and partially based on [ots-python](https://github.com/googlefonts/ots-python), but builds OTS as a Python C Extension (instead of as an executable and calling through `subprocess` as ots-python does).
 
 **NOTE:** Although this package is similar to **ots-python**, it is _not_ a drop-in replacement for it, as the Python API is different.
 
