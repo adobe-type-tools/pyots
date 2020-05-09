@@ -54,6 +54,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        mkdir -p dist
         for audited in ./wheelhouse/*-manylinux*.whl; do
             cp $audited dist
         done
