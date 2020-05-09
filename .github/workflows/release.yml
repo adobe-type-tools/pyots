@@ -7,7 +7,7 @@ on:
 
 jobs:
   do_release:
-    name: Create pyots Release
+    name: Create release and build manylinux wheels
     runs-on: ubuntu-latest
     
     steps:
@@ -42,10 +42,6 @@ jobs:
         pip install wheel
         python setup.py download
 
-    - name: Create Source distribution
-      run: |
-        python setup.py sdist
-
     - name: Build manylinux Python wheels
       id: build_wheels
       uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2010_x86_64
@@ -54,7 +50,7 @@ jobs:
         build-requirements: 'meson ninja'
         system-packages: 'zlib-devel'
 
-    - name: Attach assets to release
+    - name: Attach wheel assets to release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -90,7 +86,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies and build wheels
+    - name: Install dependencies, build wheels, and attach to release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -109,20 +105,23 @@ jobs:
     runs-on: ubuntu-latest  # pypa/gh-action-pypi-publish only runs on Linux...
     
     steps:
+    - name: Check out project
+      uses: actions/checkout@v2
+    
     - name: Get tag
       id: get_tag
       # strip 'refs/tags/' from ref, store in variable called VERSION
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-    - name: Download .whl and .tar.gz assets from release
+    - name: Download .whl assets from release # TODO: get .tar.gz source?
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        hub release download "${{ steps.get_tag.outputs.VERSION }}" # get release assets
-        mkdir dist
-        cp *.whl dist  # move .whls to dist for publishing
+        hub release download "${{ steps.get_tag.outputs.VERSION }}"
+        mkdir -p dist
+        cp *.whl dist # move .whl files to dist for publishing
     
-    - name: Publish to PyPI
+    - name: Publish wheels to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
