@@ -42,10 +42,6 @@ jobs:
         pip install wheel setuptools_scm[toml]'>=3.4'
         python setup.py download
 
-    - name: Create source distribution
-      run: |
-        python setup.py sdist  # should create 'dist' folder and use proper versioning
-
     - name: Build manylinux Python wheels
       id: build_wheels
       uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2010_x86_64
@@ -106,7 +102,7 @@ jobs:
         hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
 
   do_pypi_publish:
-    needs: [do_release, do_mac_wheels]
+    needs: [do_release, do_mac_wheels]  # wait for the other jobs to complete
     runs-on: ubuntu-latest  # pypa/gh-action-pypi-publish only runs on Linux...
     
     steps:
@@ -117,6 +113,13 @@ jobs:
       id: get_tag
       # strip 'refs/tags/' from ref, store in variable called VERSION
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Build Python source tarball
+      # do this here, because we can't use the GitHub .tar.gz (no PKG-INFO)
+      # should go into 'dist' folder to be picked up when publishing to PyPI
+      run: |
+        pip install wheel setuptools_scm[toml]'>=3.4'
+        python setup.py sdist
 
     - name: Download .whl assets from release
       env:
