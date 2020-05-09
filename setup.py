@@ -89,7 +89,6 @@ class Download(Command):
 
     def run(self):
         from urllib.request import urlopen
-        from io import BytesIO
         import tarfile
         import lzma
         import hashlib
@@ -111,7 +110,7 @@ class Download(Command):
             if not self.dry_run:
                 # response is not seekable so we first download *.tar.xz to an
                 # in-memory file, and then extract all files to the output_dir
-                f = BytesIO()
+                f = io.BytesIO()
                 with urlopen(self.url) as response:
                     f.write(response.read())
                 f.seek(0)
