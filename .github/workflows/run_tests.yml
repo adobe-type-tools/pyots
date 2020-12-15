@@ -5,8 +5,11 @@ on:
 #     branches: [ master ]
   pull_request:
     branches: [ master ]
-  repository_dispatch:
-    types: manual-trigger
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for running'
+        required: true
 
 jobs:
   build:
@@ -15,6 +18,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Log reason (manual run only)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Reason for triggering: ${{ github.event.inputs.reason }}"
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v1

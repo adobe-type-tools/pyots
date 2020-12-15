@@ -2,6 +2,7 @@ from distutils.dir_util import mkpath, remove_tree
 from distutils import log
 import io
 import os
+import re
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command import build_py
 from setuptools.command.egg_info import egg_info
@@ -149,224 +150,29 @@ class Download(Command):
                         tar.extractall(output_dir, members=to_extract)
 
             log.info("writing custom meson.build")
-            # may revisit this later; since meson is Python, there's probably
-            # a better way but for now this works.
-            # Doing this here because we have easy access to OTS version to
-            # replace in the meson build.
+
+            # updates to meson.build for custom dylib build
             if not self.dry_run:
+                with open("src/ots/meson.build", 'r') as f:
+                    meson = f.read()
+
+                # update default_options
+                meson = re.sub(
+                    r"default_options : \[(.+)],",
+                    r"default_options : [\1, 'b_staticpic=True'],",
+                    meson,
+                )
+                # remove unused ('executable('ots-sanitize' and all after)
+                meson = re.sub(
+                    r"executable\('ots-sanitize'(.+)",
+                    '',
+                    meson,
+                    flags=re.MULTILINE | re.DOTALL,
+                )
+
+                # save it
                 with open("src/ots/meson.build", 'w') as f:
-                    f.write(custom_meson.replace("<OTS_VER>", self.version))
-
-
-custom_meson = f"""
-project('ots', 'c', 'cpp',
-  version: '<OTS_VER>',
-  default_options : [
-      'cpp_std=c++11',
-      'default_library=static',
-      'b_staticpic=True'],
-)
-
-cxx = meson.get_compiler('cpp')
-
-conf = configuration_data()
-conf.set_quoted('PACKAGE', meson.project_name())
-conf.set_quoted('VERSION', meson.project_version())
-
-if get_option('debug')
-  conf.set('OTS_DEBUG', 1)
-endif
-
-if get_option('graphite')
-  conf.set('OTS_GRAPHITE', 1)
-endif
-
-freetype = dependency('freetype2', required: false)
-if freetype.found()
-  conf.set('HAVE_FREETYPE', 1)
-endif
-
-coretext = dependency('appleframeworks', modules: 'applicationservices',
-                      required: false)
-if coretext.found()
-  conf.set('HAVE_CORETEXT', 1)
-endif
-
-gdi32 = cxx.find_library('gdi32', required: false)
-if gdi32.found()
-  conf.set('HAVE_WIN32', 1)
-endif
-
-
-configure_file(output: 'config.h',
-               configuration: conf)
-
-
-brotli_includes = ['third_party/brotli/c/include']
-libbrotli = library('brotli',
-  'third_party/brotli/c/common/constants.h',
-  'third_party/brotli/c/common/dictionary.c',
-  'third_party/brotli/c/common/dictionary.h',
-  'third_party/brotli/c/common/transform.c',
-  'third_party/brotli/c/common/transform.h',
-  'third_party/brotli/c/common/version.h',
-  'third_party/brotli/c/dec/bit_reader.c',
-  'third_party/brotli/c/dec/bit_reader.h',
-  'third_party/brotli/c/dec/decode.c',
-  'third_party/brotli/c/dec/huffman.c',
-  'third_party/brotli/c/dec/huffman.h',
-  'third_party/brotli/c/dec/prefix.h',
-  'third_party/brotli/c/dec/state.c',
-  'third_party/brotli/c/dec/state.h',
-  'third_party/brotli/c/include/brotli/decode.h',
-  'third_party/brotli/c/include/brotli/port.h',
-  'third_party/brotli/c/include/brotli/types.h',
-  include_directories: include_directories(brotli_includes),
-)
-
-
-woff2_includes = ['third_party/brotli/c/include', 'third_party/woff2/include']
-libwoff2 = library('woff2',
-  'third_party/woff2/include/woff2/decode.h',
-  'third_party/woff2/include/woff2/output.h',
-  'third_party/woff2/src/buffer.h',
-  'third_party/woff2/src/port.h',
-  'third_party/woff2/src/round.h',
-  'third_party/woff2/src/store_bytes.h',
-  'third_party/woff2/src/table_tags.cc',
-  'third_party/woff2/src/table_tags.h',
-  'third_party/woff2/src/variable_length.cc',
-  'third_party/woff2/src/variable_length.h',
-  'third_party/woff2/src/woff2_common.cc',
-  'third_party/woff2/src/woff2_common.h',
-  'third_party/woff2/src/woff2_dec.cc',
-  'third_party/woff2/src/woff2_out.cc',
-  include_directories: include_directories(woff2_includes),
-)
-
-
-ots_includes = [
-  'include',
-  'third_party/woff2/include',
-]
-
-ots_sources = [
-  'src/avar.cc',
-  'src/avar.h',
-  'src/cff.cc',
-  'src/cff.h',
-  'src/cff_charstring.cc',
-  'src/cff_charstring.h',
-  'src/cmap.cc',
-  'src/cmap.h',
-  'src/cvar.cc',
-  'src/cvar.h',
-  'src/cvt.cc',
-  'src/cvt.h',
-  'src/fpgm.cc',
-  'src/fpgm.h',
-  'src/fvar.cc',
-  'src/fvar.h',
-  'src/gasp.cc',
-  'src/gasp.h',
-  'src/gdef.cc',
-  'src/gdef.h',
-  'src/glyf.cc',
-  'src/glyf.h',
-  'src/gpos.cc',
-  'src/gpos.h',
-  'src/gsub.cc',
-  'src/gsub.h',
-  'src/gvar.cc',
-  'src/gvar.h',
-  'src/hdmx.cc',
-  'src/hdmx.h',
-  'src/head.cc',
-  'src/head.h',
-  'src/hhea.cc',
-  'src/hhea.h',
-  'src/hmtx.cc',
-  'src/hmtx.h',
-  'src/hvar.cc',
-  'src/hvar.h',
-  'src/kern.cc',
-  'src/kern.h',
-  'src/layout.cc',
-  'src/layout.h',
-  'src/loca.cc',
-  'src/loca.h',
-  'src/ltsh.cc',
-  'src/ltsh.h',
-  'src/math.cc',
-  'src/math_.h',
-  'src/maxp.cc',
-  'src/maxp.h',
-  'src/metrics.cc',
-  'src/metrics.h',
-  'src/mvar.cc',
-  'src/mvar.h',
-  'src/name.cc',
-  'src/name.h',
-  'src/os2.cc',
-  'src/os2.h',
-  'src/ots.cc',
-  'src/ots.h',
-  'src/post.cc',
-  'src/post.h',
-  'src/prep.cc',
-  'src/prep.h',
-  'src/stat.cc',
-  'src/stat.h',
-  'src/variations.cc',
-  'src/variations.h',
-  'src/vdmx.cc',
-  'src/vdmx.h',
-  'src/vhea.cc',
-  'src/vhea.h',
-  'src/vmtx.cc',
-  'src/vmtx.h',
-  'src/vorg.cc',
-  'src/vorg.h',
-  'src/vvar.cc',
-  'src/vvar.h',
-]
-
-ots_libs = [libbrotli, libwoff2]
-
-if get_option('graphite')
-  ots_includes += ['third_party/lz4/lib']
-  ots_sources += [
-    'src/feat.cc',
-    'src/feat.h',
-    'src/glat.cc',
-    'src/glat.h',
-    'src/gloc.cc',
-    'src/gloc.h',
-    'src/graphite.h',
-    'src/sile.h',
-    'src/sile.cc',
-    'src/silf.h',
-    'src/silf.cc',
-    'src/sill.h',
-    'src/sill.cc',
-  ]
-  liblz4 = library('lz4',
-    'third_party/lz4/lib/lz4.c',
-    'third_party/lz4/lib/lz4.h',
-  )
-  ots_libs += [liblz4]
-endif
-
-zlib = dependency('zlib', fallback : ['zlib', 'zlib_dep'])
-
-libots = library('ots',
-  ots_sources,
-  include_directories: include_directories(ots_includes),
-  link_with: ots_libs,
-  cpp_args : '-DHAVE_CONFIG_H',
-  dependencies: zlib,
-)
-"""
+                    f.write(meson)
 
 
 custom_commands = {
@@ -424,4 +230,5 @@ setup(
     python_requires='>=3.6',
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
+    setup_requires=['setuptools_scm'],
 )
