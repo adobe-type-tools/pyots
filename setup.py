@@ -242,6 +242,7 @@ pyots_mod = Extension(
     extra_objects=_extra_objs(),
     libraries=['z'],
     include_dirs=inc_dirs,
+    library_dirs=inc_dirs,
     sources=['src/_pyots/bindings.cpp'],
 )
 
