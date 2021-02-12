@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 PY = sys.executable
-
+inc_dirs = []
 
 def _extra_objs():
     """
@@ -84,6 +84,7 @@ class BuildPy(build_py.build_py):
     def run(self):
         self.run_command('build_static')
         build_py.build_py.run(self)
+        inc_dirs += _include_dirs()
 
 
 class CustomEggInfo(egg_info):
@@ -237,7 +238,7 @@ pyots_mod = Extension(
     extra_compile_args=['-std=c++11'],
     extra_objects=_extra_objs(),
     libraries=['z'],
-    include_dirs=list(_include_dirs()),
+    include_dirs=inc_dirs,
     sources=['src/_pyots/bindings.cpp'],
 )
 
