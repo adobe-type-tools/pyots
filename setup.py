@@ -1,11 +1,11 @@
+from distutils.dir_util import mkpath, remove_tree
+from distutils import log
 import io
 import os
 import re
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command import build_py
 from setuptools.command.egg_info import egg_info
-from distutils.dir_util import mkpath, remove_tree
-from distutils import log
 import subprocess
 import sys
 
