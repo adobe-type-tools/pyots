@@ -35,6 +35,26 @@ def _extra_objs():
         print(f"DBG ext_objs {x}")
         yield x
 
+def _include_dirs():
+    """
+    Generator for include_dirs of Extension build.
+    """
+    inc_dirs = ['build/meson/', 'src/ots/include']
+
+    # for subproject include dirs we dynamically scan since versions can vary
+    subprojpath = os.path.join("src", "ots", "subprojects")
+    subprojects = os.listdir(subprojpath)
+    for d in subprojects:
+        if d.startswith("woff2-"):
+            inc_dirs.append(os.path.join(subprojpath, d, "include"))
+        if d.startswith("brotli-"):
+            inc_dirs.append(os.path.join(subprojpath, d, "c", "include"))
+        if d.startswith("lz4-"):
+            inc_dirs.append(os.path.join(subprojpath, d, "lib"))
+
+    for x in inc_dirs:
+        print(f"DBG inc_dirs {x}")
+        yield x
 
 class BuildStaticLibs(Command):
     """
@@ -215,9 +235,7 @@ pyots_mod = Extension(
     extra_compile_args=['-std=c++11'],
     extra_objects=_extra_objs(),
     libraries=['z'],
-    include_dirs=['build/meson/',
-                  'src/ots/include',
-                  ],
+    include_dirs=_include_dirs(),
     sources=['src/_pyots/bindings.cpp'],
 )
 
