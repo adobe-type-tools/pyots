@@ -35,6 +35,7 @@ def _extra_objs():
         print(f"DBG ext_objs {x}")
         yield x
 
+
 def _include_dirs():
     """
     Generator for include_dirs of Extension build.
@@ -55,6 +56,7 @@ def _include_dirs():
     for x in inc_dirs:
         print(f"DBG inc_dirs {x}")
         yield x
+
 
 class BuildStaticLibs(Command):
     """
