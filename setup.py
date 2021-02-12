@@ -87,6 +87,7 @@ class BuildPy(build_py.build_py):
         self.run_command('build_static')
         build_py.build_py.run(self)
         inc_dirs += _include_dirs()
+        print("\n\n", inc_dirs, "\n\n")
 
 
 class CustomEggInfo(egg_info):
