@@ -238,11 +238,10 @@ custom_commands = {
 
 pyots_mod = Extension(
     name='_pyots',
-    extra_compile_args=['-std=c++11'],
+    extra_compile_args=['-std=c++11'] + [f"-I{x}" for x in inc_dirs],
     extra_objects=_extra_objs(),
     libraries=['z'],
     include_dirs=inc_dirs,
-    library_dirs=inc_dirs,
     sources=['src/_pyots/bindings.cpp'],
 )
 
