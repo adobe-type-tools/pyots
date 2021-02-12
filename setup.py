@@ -32,6 +32,7 @@ def _extra_objs():
             ext_objs.append(os.path.join(subprojpath, d, "contrib", "meson", "meson", "lib", "liblz4.a"))  # noqa: E501
 
     for x in ext_objs:
+        print(f"DBG ext_objs {x}")
         yield x
 
 
@@ -251,4 +252,5 @@ setup(
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    zip_safe=False,
 )
