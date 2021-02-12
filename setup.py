@@ -38,7 +38,7 @@ def _extra_objs():
 
 def _include_dirs():
     """
-    Generator for include_dirs of Extension build.
+    Function to return include_dirs of Extension build.
     """
     inc_dirs = ['build/meson/', 'src/ots/include']
 
@@ -53,9 +53,7 @@ def _include_dirs():
         if d.startswith("lz4-"):
             inc_dirs.append(os.path.join(subprojpath, d, "lib"))
 
-    for x in inc_dirs:
-        print(f"DBG inc_dirs {x}")
-        yield x
+    return inc_dirs
 
 
 class BuildStaticLibs(Command):
