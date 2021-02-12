@@ -12,6 +12,7 @@ import sys
 PY = sys.executable
 inc_dirs = []
 
+
 def _extra_objs():
     """
     Generator for extra_objects of Extension build.
@@ -82,6 +83,7 @@ class BuildPy(build_py.build_py):
     """
 
     def run(self):
+        global inc_dirs
         self.run_command('build_static')
         build_py.build_py.run(self)
         inc_dirs += _include_dirs()
