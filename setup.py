@@ -1,11 +1,11 @@
-from distutils.dir_util import mkpath, remove_tree
-from distutils import log
 import io
 import os
 import re
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command import build_py
 from setuptools.command.egg_info import egg_info
+from distutils.dir_util import mkpath, remove_tree
+from distutils import log
 import subprocess
 import sys
 
@@ -38,7 +38,7 @@ def _extra_objs():
 
 def _include_dirs():
     """
-    Function to return include_dirs of Extension build.
+    Generator for include_dirs of Extension build.
     """
     inc_dirs = ['build/meson/', 'src/ots/include']
 
@@ -53,7 +53,9 @@ def _include_dirs():
         if d.startswith("lz4-"):
             inc_dirs.append(os.path.join(subprojpath, d, "lib"))
 
-    return inc_dirs
+    for x in inc_dirs:
+        print(f"DBG inc_dirs {x}")
+        yield x
 
 
 class BuildStaticLibs(Command):
@@ -235,7 +237,7 @@ pyots_mod = Extension(
     extra_compile_args=['-std=c++11'],
     extra_objects=_extra_objs(),
     libraries=['z'],
-    include_dirs=_include_dirs(),
+    include_dirs=list(_include_dirs()),
     sources=['src/_pyots/bindings.cpp'],
 )
 
