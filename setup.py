@@ -12,6 +12,29 @@ import sys
 PY = sys.executable
 
 
+def _extra_objs():
+    """
+    Generator for extra_objects of Extension build.
+    """
+    ext_objs = ['build/meson/libots.a']
+
+    # for subproject libs we dynamically scan since versions can vary
+    subprojpath = os.path.join("build", "meson", "subprojects")
+    subprojects = os.listdir(subprojpath)
+    for d in subprojects:
+        if d.startswith("woff2-"):
+            ext_objs.append(os.path.join(subprojpath, d, "libwoff2_common.a"))
+            ext_objs.append(os.path.join(subprojpath, d, "libwoff2_decoder.a"))
+        if d.startswith("brotli-"):
+            ext_objs.append(os.path.join(subprojpath, d, "libbrotli_common.a"))
+            ext_objs.append(os.path.join(subprojpath, d, "libbrotli_decoder.a"))  # noqa: E501
+        if d.startswith("lz4-"):
+            ext_objs.append(os.path.join(subprojpath, d, "contrib", "meson", "meson", "lib", "liblz4.a"))  # noqa: E501
+
+    for x in ext_objs:
+        yield x
+
+
 class BuildStaticLibs(Command):
     """
     Custom command to run build.py script prior to building Extension
@@ -156,6 +179,10 @@ class Download(Command):
                 with open("src/ots/meson.build", 'r') as f:
                     meson = f.read()
 
+                    # back up original
+                    with open("src/ots/meson.build.orig", 'w') as f_out:
+                        f_out.write(meson)
+
                 # update default_options
                 meson = re.sub(
                     r"default_options : \[(.+)],",
@@ -185,18 +212,11 @@ custom_commands = {
 pyots_mod = Extension(
     name='_pyots',
     extra_compile_args=['-std=c++11'],
-    extra_objects=[
-        'build/meson/libots.a',
-        'build/meson/libwoff2.a',
-        'build/meson/libbrotli.a',
-        'build/meson/liblz4.a'],
+    extra_objects=_extra_objs(),
     libraries=['z'],
     include_dirs=['build/meson/',
                   'src/ots/include',
-                  'src/ots/include/src',
-                  'src/ots/third_party/brotli/c/include',
-                  'src/ots/third_party/lz4/lib',
-                  'src/ots/third_party/woff2/include/woff2'],
+                  ],
     sources=['src/_pyots/bindings.cpp'],
 )
 
