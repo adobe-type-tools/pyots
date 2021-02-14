@@ -17,7 +17,7 @@ class PyOTSContext: public OTSContext {
  public:
   explicit PyOTSContext(int level): level_(level) { }
   std::stringstream msgs;
-  bool modified;
+  bool modified = false;
 
   void Message(int level, const char *format, ...) {
     va_list va;
@@ -46,16 +46,8 @@ class PyOTSContext: public OTSContext {
 
   TableAction GetTableAction(uint32_t tag) {
     switch (tag) {
-      // ots seems to drop these silently
-      case OTS_TAG('B', 'A', 'S', 'E'):
-      case OTS_TAG('D', 'S', 'I', 'G'):
-
-      // from chromium project -- various color tables
       case OTS_TAG('C', 'B', 'D', 'T'):
       case OTS_TAG('C', 'B', 'L', 'C'):
-      case OTS_TAG('C', 'O', 'L', 'R'):
-      case OTS_TAG('C', 'P', 'A', 'L'):
-      case OTS_TAG('C', 'F', 'F', '2'):
       case OTS_TAG('s', 'b', 'i', 'x'):
 
         return TABLE_ACTION_PASSTHRU;

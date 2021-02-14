@@ -16,7 +16,7 @@ class OTSResult():
         self.messages = tuple(raw_tuple[2].split("\n"))
 
 
-def sanitize(input, output=None, quiet=False, font_index=-1) -> tuple:
+def sanitize(input, output=None, quiet=False, font_index=-1) -> OTSResult:
     """
     Sanitize a file. Options:
         output      path for output file. If not specified, no output will be

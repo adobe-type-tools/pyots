@@ -1,26 +1,71 @@
-import os
+from pathlib import Path
 
 import pyots
 
-test_folder = os.path.realpath(os.path.dirname(__file__))
+ROOT = Path(__file__).parent.parent.resolve()
+test_folder = ROOT / "tests"
 
 
-def test_ots_suite():
+def test_ots_good():
 
-    tld = os.path.join(test_folder, "..", "src", "ots", "tests", "fonts")
-    dirs = ['bad', 'fuzzing', 'good']
+    tld = ROOT / "src" / "ots" / "tests" / "fonts" / "good"
 
-    for d in dirs:
-        for f in os.listdir(os.path.join(tld, d)):
-            base, ext = os.path.splitext(f)
-            if ext.lower() not in ('.ttf', '.woff', '.ttc', '.woff2', '.otf'):
-                continue
+    count = 0
+    for f in tld.iterdir():
+        ext = f.suffix
+        if ext.lower() not in ('.ttf', '.woff', '.ttc', '.woff2', '.otf'):
+            continue
 
-            r = pyots.sanitize(os.path.join(tld, d, f))
+        r = pyots.sanitize(f)
 
-            if not r.sanitized and d != "bad":
-                pp = f"{d}/{f}"
-                assert f"{pp}" in EXPECT_FAIL, f"{pp} not sanitized and not in expected failures"  # noqa: E501
+        if not r.sanitized:
+            count += 1
+            print("[good] unexpected failure on", f, "\n".join(r.messages))
+
+    assert not count, f"{count} file{'s' if count != 1 else ''} failed when expected to be sanitized."  # noqa: E501
+
+
+def test_ots_bad():
+
+    tld = ROOT / "src" / "ots" / "tests" / "fonts" / "bad"
+
+    count = 0
+    for f in tld.iterdir():
+        ext = f.suffix
+        if ext.lower() not in ('.ttf', '.woff', '.ttc', '.woff2', '.otf'):
+            continue
+
+        r = pyots.sanitize(f)
+
+        if r.sanitized:
+            count += 1
+            print("[bad] unexpected success on", f, "\n".join(r.messages))
+
+    assert not count, f"{count} file{'s were' if count != 1 else 'was'} sanitized when expected to be sanitized."  # noqa: E501
+
+
+def test_ots_fuzzing():
+
+    tld = ROOT / "src" / "ots" / "tests" / "fonts" / "fuzzing"
+
+    count = 0
+    for f in tld.iterdir():
+        ext = f.suffix
+        if ext.lower() not in ('.ttf', '.woff', '.ttc', '.woff2', '.otf'):
+            continue
+
+        r = pyots.sanitize(f)
+
+        if str(f.relative_to(ROOT / "src" / "ots" / "tests" / "fonts")) in EXPECT_FAIL:  # noqa: E501
+            if r.sanitized:
+                count += 1
+                print("[fuzzing] unexpected success on", f, "\n".join(r.messages))  # noqa: E501
+        else:
+            if not r.sanitized:
+                count += 1
+                print("[fuzzing] unexpected failure on", f, "\n".join(r.messages))  # noqa: E501
+
+    assert not count, f"{count} file{'s' if count != 1 else ''} had an unexpected sanitization result."  # noqa: E501
 
 
 EXPECT_FAIL = {
@@ -63,4 +108,5 @@ EXPECT_FAIL = {
     'fuzzing/8240789f6d12d4cfc4b5e8e6f246c3701bcf861f.otf',
     'fuzzing/3857535d8c0d2bfeab7ee2cd6ba5e39bcb4abd90.ttf',
     'fuzzing/adb242cbc61b3ca428903e397a2c9dcf97fe3042.ttf',
+    'fuzzing/2a12de12323bfd99b9c4bb33ed20b66b8ff0915f.otf',
 }
