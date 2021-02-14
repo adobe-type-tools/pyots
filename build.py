@@ -10,11 +10,13 @@ import shutil
 import errno
 import argparse
 
-
 ROOT = Path(__file__).parent.resolve()
-BUILD_ROOT = ROOT / "build"
+BUILD_ROOT = ROOT / "src" / "ots" / "build"
 BUILD_DIR = BUILD_ROOT / "meson"
-SRC_DIR = ROOT.joinpath("src", "ots")
+SRC_DIR = ROOT / "src"
+OTS_SRC_DIR = SRC_DIR / "ots"
+SUB_DIR = OTS_SRC_DIR / "subprojects"
+
 
 if 'manylinux' in os.environ.get("AUDITWHEEL_PLAT", ''):
     os.environ["PATH"] += os.pathsep + os.path.dirname(sys.executable)
@@ -31,7 +33,7 @@ MESON_CMD = [
     "--strip",
     "-Ddebug=true",
     str(BUILD_DIR),
-    str(SRC_DIR),
+    str(OTS_SRC_DIR),
 ]
 
 NINJA_CMD = [TOOLS["ninja"], "-C", str(BUILD_DIR)]
@@ -50,6 +52,7 @@ def check_tools():
 
 
 def configure(reconfigure=False):
+    print(f"build.py: Running {' '.join(MESON_CMD)}")
     if not (BUILD_DIR / "build.ninja").exists():
         subprocess.run(MESON_CMD, check=True, env=os.environ)
     elif reconfigure:
@@ -59,6 +62,7 @@ def configure(reconfigure=False):
 
 
 def make(*targets, clean=False):
+    print(f"build.py: Running {' '.join(NINJA_CMD)}")
     targets = list(targets)
     if clean:
         subprocess.run(NINJA_CMD + ["-t", "clean"] + targets,

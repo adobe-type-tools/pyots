@@ -1,3 +1,4 @@
+from build import SRC_DIR, OTS_SRC_DIR
 from distutils.dir_util import mkpath, remove_tree
 from distutils import log
 import io
@@ -10,6 +11,83 @@ import subprocess
 import sys
 
 PY = sys.executable
+
+BUILD_DIR = OTS_SRC_DIR / "build" / "meson"
+BUILD_SUB_DIR = BUILD_DIR / "subprojects"
+SRC_SUB_DIR = OTS_SRC_DIR / "subprojects"
+
+# TODO: try to make this scheme less fragile/less dependent on hard-coded tags
+# to avoid changing it with every new ots release (although it seems like every
+# release of ots has something that causes this build to break anyway so it's
+# not really that urgent. We just have to adjust every release.
+BROTLI_TAG = "1.0.7"
+LZ4_TAG = "1.9.3"
+WOFF2_TAG = "a0d0ed7da27b708c0a4e96ad7a998bddc933c06e"
+
+
+def _get_extra_objects():
+    """
+    Create the list of 'extra_ojects' for building the extension. This is done
+    in a way to try to be forward-compatible with changes to ots's
+    dependencies, but could still break if those dependencies change the names
+    of the static libs generated.
+    """
+    # libots
+    xo = [BUILD_DIR / "libots.a"]
+
+    # brotli
+    # NOTE: decoder needs to come before common!
+    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_decoder.a")
+    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_common.a")
+
+    # lz4
+    xo.append(BUILD_SUB_DIR / f"lz4-{LZ4_TAG}" / "contrib" / "meson" / "meson" / "lib" / "liblz4.a")  # noqa: E501
+
+    # woff2 -- skipped for now, building as part of Extension
+    # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_decoder.a")
+    # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_common.a")
+
+    return [str(p) for p in xo]
+
+
+def _get_include_dirs():
+    """
+    Create the list of 'include_dirs' for building the Extension.
+    """
+    ip = [
+        BUILD_DIR,
+        SRC_DIR / "_pyots",
+        OTS_SRC_DIR / "include",
+        ]
+
+    # lz4
+    ip.append(SRC_SUB_DIR / f"lz4-{LZ4_TAG}" / "lib")
+
+    # brotli
+    ip.append(SRC_SUB_DIR / f"brotli-{BROTLI_TAG}" / "c" / "include")
+
+    # woff2
+    ip.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "include")
+
+    return [str(p) for p in ip]
+
+
+def _get_sources():
+    """
+    Create the list of 'sources' for building the Extension.
+    """
+    sp = [
+        SRC_DIR / "_pyots" / "bindings.cpp",
+    ]
+
+    # woff2 sources
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "table_tags.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")  # noqa: E501
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_common.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_dec.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_out.cc")
+
+    return [str(p) for p in sp]
 
 
 class BuildStaticLibs(Command):
@@ -34,7 +112,6 @@ class BuildPy(build_py.build_py):
     """
     Custom python build command. Calls 'build_static' prior to Python build.
     """
-
     def run(self):
         self.run_command('build_static')
         build_py.build_py.run(self)
@@ -156,6 +233,10 @@ class Download(Command):
                 with open("src/ots/meson.build", 'r') as f:
                     meson = f.read()
 
+                    # back up original
+                    with open("src/ots/meson.build.orig", 'w') as f_out:
+                        f_out.write(meson)
+
                 # update default_options
                 meson = re.sub(
                     r"default_options : \[(.+)],",
@@ -184,20 +265,11 @@ custom_commands = {
 
 pyots_mod = Extension(
     name='_pyots',
-    extra_compile_args=['-std=c++11'],
-    extra_objects=[
-        'build/meson/libots.a',
-        'build/meson/libwoff2.a',
-        'build/meson/libbrotli.a',
-        'build/meson/liblz4.a'],
     libraries=['z'],
-    include_dirs=['build/meson/',
-                  'src/ots/include',
-                  'src/ots/include/src',
-                  'src/ots/third_party/brotli/c/include',
-                  'src/ots/third_party/lz4/lib',
-                  'src/ots/third_party/woff2/include/woff2'],
-    sources=['src/_pyots/bindings.cpp'],
+    extra_compile_args=['-fPIC', '-std=c++11'],
+    extra_objects=_get_extra_objects(),
+    include_dirs=_get_include_dirs(),
+    sources=_get_sources(),
 )
 
 with io.open("README.md", encoding="utf-8") as readme:
@@ -231,4 +303,5 @@ setup(
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    zip_safe=False,
 )
