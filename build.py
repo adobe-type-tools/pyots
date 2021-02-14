@@ -32,6 +32,7 @@ MESON_CMD = [
     "--buildtype=release",
     "--strip",
     "-Ddebug=true",
+    "--force-fallback-for=libbrotlidec,liblz4",
     str(BUILD_DIR),
     str(OTS_SRC_DIR),
 ]
