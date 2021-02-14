@@ -1,3 +1,4 @@
+from build import SRC_DIR, OTS_SRC_DIR
 from distutils.dir_util import mkpath, remove_tree
 from distutils import log
 import io
@@ -10,53 +11,83 @@ import subprocess
 import sys
 
 PY = sys.executable
-inc_dirs = []
+
+BUILD_DIR = OTS_SRC_DIR / "build" / "meson"
+BUILD_SUB_DIR = BUILD_DIR / "subprojects"
+SRC_SUB_DIR = OTS_SRC_DIR / "subprojects"
+
+# TODO: try to make this scheme less fragile/less dependent on hard-coded tags
+# to avoid changing it with every new ots release (although it seems like every
+# release of ots has something that causes this build to break anyway so it's
+# not really that urgent. We just have to adjust every release.
+BROTLI_TAG = "1.0.7"
+LZ4_TAG = "1.9.3"
+WOFF2_TAG = "a0d0ed7da27b708c0a4e96ad7a998bddc933c06e"
 
 
-def _extra_objs():
+def _get_extra_objects():
     """
-    Generator for extra_objects of Extension build.
+    Create the list of 'extra_ojects' for building the extension. This is done
+    in a way to try to be forward-compatible with changes to ots's
+    dependencies, but could still break if those dependencies change the names
+    of the static libs generated.
     """
-    ext_objs = ['build/meson/libots.a']
+    # libots
+    xo = [BUILD_DIR / "libots.a"]
 
-    # for subproject libs we dynamically scan since versions can vary
-    subprojpath = os.path.join("build", "meson", "subprojects")
-    subprojects = os.listdir(subprojpath)
-    for d in subprojects:
-        if d.startswith("woff2-"):
-            ext_objs.append(os.path.join(subprojpath, d, "libwoff2_common.a"))
-            ext_objs.append(os.path.join(subprojpath, d, "libwoff2_decoder.a"))
-        if d.startswith("brotli-"):
-            ext_objs.append(os.path.join(subprojpath, d, "libbrotli_common.a"))
-            ext_objs.append(os.path.join(subprojpath, d, "libbrotli_decoder.a"))  # noqa: E501
-        if d.startswith("lz4-"):
-            ext_objs.append(os.path.join(subprojpath, d, "contrib", "meson", "meson", "lib", "liblz4.a"))  # noqa: E501
+    # brotli
+    # NOTE: decoder needs to come before common!
+    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_decoder.a")
+    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_common.a")
 
-    for x in ext_objs:
-        print(f"DBG ext_objs {x}")
-        yield x
+    # lz4
+    xo.append(BUILD_SUB_DIR / f"lz4-{LZ4_TAG}" / "contrib" / "meson" / "meson" / "lib" / "liblz4.a")  # noqa: E501
+
+    # woff2 -- skipped for now, building as part of Extension
+    # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_decoder.a")
+    # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_common.a")
+
+    return [str(p) for p in xo]
 
 
-def _include_dirs():
+def _get_include_dirs():
     """
-    Generator for include_dirs of Extension build.
+    Create the list of 'include_dirs' for building the Extension.
     """
-    inc_dirs = ['build/meson/', 'src/ots/include', 'src/ots/src']
+    ip = [
+        BUILD_DIR,
+        SRC_DIR / "_pyots",
+        OTS_SRC_DIR / "include",
+        ]
 
-    # for subproject include dirs we dynamically scan since versions can vary
-    subprojpath = os.path.join("src", "ots", "subprojects")
-    subprojects = os.listdir(subprojpath)
-    for d in subprojects:
-        if d.startswith("woff2-"):
-            inc_dirs.append(os.path.join(subprojpath, d, "include"))
-        if d.startswith("brotli-"):
-            inc_dirs.append(os.path.join(subprojpath, d, "c", "include"))
-        if d.startswith("lz4-"):
-            inc_dirs.append(os.path.join(subprojpath, d, "lib"))
+    # lz4
+    ip.append(SRC_SUB_DIR / f"lz4-{LZ4_TAG}" / "lib")
 
-    for x in inc_dirs:
-        print(f"DBG inc_dirs {x}")
-        yield x
+    # brotli
+    ip.append(SRC_SUB_DIR / f"brotli-{BROTLI_TAG}" / "c" / "include")
+
+    # woff2
+    ip.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "include")
+
+    return [str(p) for p in ip]
+
+
+def _get_sources():
+    """
+    Create the list of 'sources' for building the Extension.
+    """
+    sp = [
+        SRC_DIR / "_pyots" / "bindings.cpp",
+    ]
+
+    # woff2 sources
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "table_tags.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_common.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_dec.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_out.cc")
+
+    return [str(p) for p in sp]
 
 
 class BuildStaticLibs(Command):
@@ -81,13 +112,9 @@ class BuildPy(build_py.build_py):
     """
     Custom python build command. Calls 'build_static' prior to Python build.
     """
-
     def run(self):
-        global inc_dirs
         self.run_command('build_static')
         build_py.build_py.run(self)
-        inc_dirs += _include_dirs()
-        print("\n\n", inc_dirs, "\n\n")
 
 
 class CustomEggInfo(egg_info):
@@ -238,11 +265,11 @@ custom_commands = {
 
 pyots_mod = Extension(
     name='_pyots',
-    extra_compile_args=['-std=c++11'],
-    extra_objects=_extra_objs(),
     libraries=['z'],
-    include_dirs=inc_dirs,
-    sources=['src/_pyots/bindings.cpp'],
+    extra_compile_args=['-fPIC', '-std=c++11'],
+    extra_objects=_get_extra_objects(),
+    include_dirs=_get_include_dirs(),
+    sources=_get_sources(),
 )
 
 with io.open("README.md", encoding="utf-8") as readme:

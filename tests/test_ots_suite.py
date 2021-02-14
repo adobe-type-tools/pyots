@@ -62,4 +62,5 @@ EXPECT_FAIL = {
     'fuzzing/aca5f8ef7bc0754b0b6fd7a1abd4c69ca7801780.ttf',
     'fuzzing/8240789f6d12d4cfc4b5e8e6f246c3701bcf861f.otf',
     'fuzzing/3857535d8c0d2bfeab7ee2cd6ba5e39bcb4abd90.ttf',
+    'fuzzing/adb242cbc61b3ca428903e397a2c9dcf97fe3042.ttf',
 }
