@@ -82,7 +82,7 @@ def _get_sources():
 
     # woff2 sources
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "table_tags.cc")
-    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")  # noqa: E501
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_common.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_dec.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_out.cc")
