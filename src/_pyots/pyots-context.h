@@ -45,15 +45,15 @@ class PyOTSContext: public OTSContext {
     }
 
     if (level == 0) {
-      offset += sprintf(buff + offset, "ERROR: ");
+      offset += snprintf(buff + offset, buffsize - offset, "ERROR: ");
     } else {
-      offset += sprintf(buff + offset, "WARNING: ");
+      offset += snprintf(buff + offset, buffsize - offset, "WARNING: ");
     }
 
     va_start(va, format);
     offset += vsnprintf(buff + offset, buffsize - offset, format, va);
     va_end(va);
-    offset += sprintf(buff + offset, "\n");
+    offset += snprintf(buff + offset, buffsize - offset, "\n");
     }
 
   TableAction GetTableAction(uint32_t tag) {
