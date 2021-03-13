@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 # Python interface for pyots.
-
 import _pyots
 
 version = _pyots.version
@@ -13,7 +12,7 @@ class OTSResult():
     def __init__(self, raw_tuple):
         self.sanitized = bool(raw_tuple[0])
         self.modified = bool(raw_tuple[1])
-        self.messages = tuple(raw_tuple[2].split("\n"))
+        self.messages = tuple(raw_tuple[2].strip().split("\n"))
 
 
 def sanitize(input, output=None, quiet=False, font_index=-1) -> OTSResult:
@@ -33,6 +32,15 @@ def sanitize(input, output=None, quiet=False, font_index=-1) -> OTSResult:
         messages (string)   Messages generated during sanitzation (empty if
                             'quiet' was specified as True).
     """
-    r = _pyots._sanitize(input, output or '', quiet, font_index)
+    # (san, mod, rmsg) = _pyots._sanitize(input, output or os.devnull, quiet, font_index)
+    (san, mod, rmsg) = _pyots._sanitize(input, output or '', quiet, font_index)
 
-    return OTSResult(r)
+    if rmsg is not None:
+        if isinstance(rmsg, bytes):
+            msg = rmsg.decode('ascii', errors='backslashreplace')
+        else:
+            msg = rmsg
+    else:
+        msg = ''
+
+    return OTSResult((san, mod, msg))

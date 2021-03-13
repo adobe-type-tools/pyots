@@ -29,8 +29,8 @@ TOOLS = {
 MESON_CMD = [
     TOOLS["meson"],
     "--backend=ninja",
-    "-Ddebug=true",
-    "-Doptimization=3",
+    "--buildtype=release",
+    "--strip",
     "--default-library=static",
     "--force-fallback-for=libbrotlidec,liblz4",
     str(BUILD_DIR),

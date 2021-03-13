@@ -1,8 +1,9 @@
 name: Run Tests
 
 on:
-#   push:
-#     branches: [ master ]
+  push:
+    paths-ignore:
+    - README*
   pull_request:
     branches: [ master ]
   workflow_dispatch:
