@@ -35,6 +35,7 @@ static PyObject* method_sanitize(PyObject* self, PyObject* args) {
   Py_ssize_t lenIn;
   char *infilename;
   if (PyBytes_AsStringAndSize(pyInFilenameObj, &infilename, &lenIn)) {
+    Py_XDECREF(pyInFilenameObj);
     return NULL;
   }
 
@@ -51,27 +52,27 @@ static PyObject* method_sanitize(PyObject* self, PyObject* args) {
   /* Define our OTS context */
   ots::PyOTSContext context(quiet ? -1: 4);
 
-  /* set up output result and stream */
-  std::unique_ptr<uint8_t[]> result(new uint8_t[in.size() * 8]);
-  ots::MemoryStream output(result.get(), in.size() * 8);
+  /* set up output stream */
+  ots::ExpandingMemoryStream output(in.size() * 2, in.size() * 8);
 
   /* process (sanitize) */
   bool sanitized;
   sanitized = context.Process(&output, in.data(), in.size(), kwFontIndex);
-
+  
   /* check for file modifications */
   // TODO(josh-hadley): figure out the right way to do this...ots seems to
   // modify *everything*. Currently using very naive approach: basically if
   // any WARNINGs were generated, but file was successfully sanitized, we
   // count it as a modification. Probably need to analyze ots and look for
   // specific messages that indicate modification and trap for those.
-  bool modified = context.modified && sanitized;
+  bool modified = sanitized && context.modified;
 
   /* write output, if specified */
   if (PyObject_IsTrue(pyOutFilenameObj)) {
     char *outfilename;
     Py_ssize_t ofl;
     if (PyBytes_AsStringAndSize(pyOutFilenameObj, &outfilename, &ofl)) {
+      Py_XDECREF(pyOutFilenameObj);
       return NULL;
     }
 
@@ -80,24 +81,30 @@ static PyObject* method_sanitize(PyObject* self, PyObject* args) {
       return PyErr_SetFromErrnoWithFilenameObject(
         PyExc_OSError, pyOutFilenameObj);
     }
-    outs.write(reinterpret_cast<const char*>(result.get()), output.Tell());
+    outs.write(reinterpret_cast<const char*>(output.get()), output.Tell());
+    outs.close();
   }
 
   // Set up returns
-  PyObject* msgstr;
+  PyObject* pymsgstr;
+  PyObject* pysanitized = PyBool_FromLong(sanitized);
+  PyObject* pymodified = PyBool_FromLong(modified & sanitized);
   if (quiet) {
-    msgstr = Py_BuildValue("s", "");
+    pymsgstr = Py_BuildValue("y", NULL);
   } else {
-    msgstr = PyUnicode_FromString(context.msgs.str().c_str());
+    pymsgstr = PyBytes_FromStringAndSize(context.buff, context.offset);
   }
   PyObject* retTuple = Py_BuildValue("OOO",
-                                     PyBool_FromLong(sanitized),
-                                     PyBool_FromLong(modified & sanitized),
-                                     msgstr);
+                                     pysanitized,
+                                     pymodified,
+                                     pymsgstr);
 
-  // decref input PyObjects
-  Py_DECREF(pyInFilenameObj);
-  Py_DECREF(pyOutFilenameObj);
+  // decref PyObjects
+  Py_XDECREF(pyInFilenameObj);
+  Py_XDECREF(pyOutFilenameObj);
+  Py_XDECREF(pymsgstr);
+  Py_XDECREF(pysanitized);
+  Py_XDECREF(pymodified);
 
   return retTuple;
 }

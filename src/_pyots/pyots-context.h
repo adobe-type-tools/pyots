@@ -16,33 +16,45 @@ namespace ots {
 class PyOTSContext: public OTSContext {
  public:
   explicit PyOTSContext(int level): level_(level) { }
-  std::stringstream msgs;
+  int buffsize = 2048;
+  char *buff = (char *)malloc(buffsize * sizeof(char));
+  int offset = 0;
   bool modified = false;
 
   void Message(int level, const char *format, ...) {
     va_list va;
 
-    if (level) {
-      // This is almost certainly not the right way to determine this, but...
+    if (level >= 0) {
+      // assume any Warning or Error means a modification was needed.
       modified = true;
     }
 
     if (level > level_)
       return;
 
-    if (level == 0) {
-      msgs << "ERROR: ";
-    } else {
-      msgs << "WARNING: ";
+    if (offset > buffsize - 256 ) {
+      buffsize *= 1.5;
+      char *tmp_buff = (char *)realloc(buff, buffsize * sizeof(char));
+      if (tmp_buff == NULL){
+        printf("Memory error; aborting.\n");
+        free(buff);
+        exit(-2);
+      } else {
+        buff = tmp_buff;
+      }
     }
 
-    char *tmp;
+    if (level == 0) {
+      offset += sprintf(buff + offset, "ERROR: ");
+    } else {
+      offset += sprintf(buff + offset, "WARNING: ");
+    }
+
     va_start(va, format);
-    vasprintf(&tmp, format, va);
-    msgs << tmp << std::endl;
-    free(tmp);
+    offset += vsnprintf(buff + offset, buffsize - offset, format, va);
     va_end(va);
-  }
+    offset += sprintf(buff + offset, "\n");
+    }
 
   TableAction GetTableAction(uint32_t tag) {
     switch (tag) {
@@ -55,6 +67,11 @@ class PyOTSContext: public OTSContext {
       default:
         return TABLE_ACTION_DEFAULT;
     }
+  }
+
+  ~PyOTSContext() {
+    if (buff)
+      free(buff);
   }
 
  private:

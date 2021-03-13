@@ -266,7 +266,7 @@ custom_commands = {
 pyots_mod = Extension(
     name='_pyots',
     libraries=['z'],
-    extra_compile_args=['-fPIC', '-std=c++11'],
+    extra_compile_args=['-fPIC', '-std=c++17'],
     extra_objects=_get_extra_objects(),
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
