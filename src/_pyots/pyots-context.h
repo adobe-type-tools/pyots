@@ -32,10 +32,10 @@ class PyOTSContext: public OTSContext {
     if (level > level_)
       return;
 
-    if (offset > buffsize - 256 ) {
+    if (offset > buffsize - 256) {
       buffsize *= 1.5;
       char *tmp_buff = (char *)realloc(buff, buffsize * sizeof(char));
-      if (tmp_buff == NULL){
+      if (tmp_buff == NULL) {
         printf("Memory error; aborting.\n");
         free(buff);
         exit(-2);
