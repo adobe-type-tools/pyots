@@ -58,7 +58,7 @@ static PyObject* method_sanitize(PyObject* self, PyObject* args) {
   /* process (sanitize) */
   bool sanitized;
   sanitized = context.Process(&output, in.data(), in.size(), kwFontIndex);
-  
+
   /* check for file modifications */
   // TODO(josh-hadley): figure out the right way to do this...ots seems to
   // modify *everything*. Currently using very naive approach: basically if
