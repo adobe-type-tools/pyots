@@ -245,7 +245,7 @@ class Download(Command):
                 )
                 # remove unused ('executable('ots-sanitize' and all after)
                 meson = re.sub(
-                    r"executable\('ots-sanitize'(.+)",
+                    r"ots_sanitize = executable\('ots-sanitize',(.+)",
                     '',
                     meson,
                     flags=re.MULTILINE | re.DOTALL,
