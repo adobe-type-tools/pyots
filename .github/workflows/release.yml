@@ -1,141 +1,101 @@
-name: Create Release and build wheels
+name: Build Python Wheels
 
 on:
   push:
     tags:
-      - '[0-9].*'
+      - '\d+\.\d+\.[0-9a-z]+'
+
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for running workflow'
+        required: true
 
 jobs:
-  do_release:
-    name: Create release and build manylinux wheels
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Check out project
-      uses: actions/checkout@v2
-    
-    - name: Get tag
-      id: get_tag
-      # strip 'refs/tags/' from ref, store in variable called VERSION
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.get_tag.outputs.VERSION }} # VERSION from get_tag step above
-        release_name: v${{ steps.get_tag.outputs.VERSION }}
-        draft: false
-        prerelease: true
-
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install wheel setuptools_scm[toml]'>=3.4'
-        python setup.py download
-
-    - name: Build manylinux Python wheels
-      id: build_wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2010_x86_64
-      with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-        build-requirements: 'meson ninja'
-        system-packages: 'zlib-devel'
-
-    - name: Attach wheel and sdist assets to release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mkdir -p dist
-        for audited in ./wheelhouse/*-manylinux*.whl; do
-            cp $audited dist
-        done
-        set -x
-        assets=()
-        for asset in ./dist/*; do
-          assets+=("-a" "$asset")
-        done
-        hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
-
-  do_mac_wheels:
-    needs: [do_release]
-    name: Build Mac wheels
-    runs-on: macos-latest
+  build_wheels:
+    name: Build Py3 Wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
-    - name: Check out project
+
+    - name: Log reason (manual run only)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Reason for triggering: ${{ github.event.inputs.reason }}"
+
+    - name: Check out
       uses: actions/checkout@v2
-    
-    - name: Get tag
-      id: get_tag
-      # strip 'refs/tags/' from ref, store in variable called VERSION
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        fetch-depth: 0  # unshallow fetch for setuptools-scm
 
-    - name: Install dependencies, build wheels, and attach to release
+    - name: Install Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Build wheel
+      uses: pypa/cibuildwheel@v2.3.0
+      with:
+        output-dir: dist
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CIBW_BUILD: "cp37-* cp38-* cp39-* cp310-*"
+        CIBW_ARCHS_MACOS: x86_64 universal2
+        CIBW_ARCHS_LINUX: x86_64
+        CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+        CIBW_SKIP: "*musllinux*"
+        CIBW_BEFORE_ALL_LINUX: "yum install -y libuuid-devel"
+
+    - name: Build sdist (Ubuntu only)
+      if: matrix.os == 'ubuntu-latest'
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install wheel
-        python setup.py download
-        pip wheel . -w dist
-        for asset in ./dist/*.whl; do
-            assets+=("-a" "$asset")
-        done
-        hub release edit "${assets[@]}" -m "${{ steps.get_tag.outputs.VERSION }}" "${{ steps.get_tag.outputs.VERSION }}"
-
-  do_pypi_publish:
-    needs: [do_release, do_mac_wheels]  # wait for the other jobs to complete
-    runs-on: ubuntu-latest  # pypa/gh-action-pypi-publish only runs on Linux...
-    
-    steps:
-    - name: Check out project
-      uses: actions/checkout@v2
-    
-    - name: Get tag
-      id: get_tag
-      # strip 'refs/tags/' from ref, store in variable called VERSION
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-
-    - name: Build Python source tarball
-      # do this here, because we can't use the GitHub .tar.gz (no PKG-INFO)
-      # should go into 'dist' folder to be picked up when publishing to PyPI
-      run: |
-        pip install wheel setuptools_scm[toml]'>=3.4'
         python setup.py sdist
 
-    - name: Download .whl assets from release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheelstorage
+        path: ./dist/*
+        if-no-files-found: error
+        retention-days: 30
+
+  publish_release:
+    name: Publish Release
+    needs: build_wheels
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Get date & flat tag
+      id: date_tag
       run: |
-        hub release download "${{ steps.get_tag.outputs.VERSION }}"
-        mkdir -p dist
-        cp *.whl dist # move .whl files to dist for publishing
-    
-    - name: Publish wheels to PyPI
-      uses: pypa/gh-action-pypi-publish@master
+        export DATE=$(TZ=US/Pacific date +'%Y-%m-%d')
+        echo $DATE
+        export FLAT_TAG=$(echo ${GITHUB_REF##*/} | sed 's/\.//g')
+        echo $FLAT_TAG
+        echo ::set-output name=TODAY::$DATE
+        echo ::set-output name=VERSION::$FLAT_TAG
+      shell: bash
+
+    - name: Download release assets
+      uses: actions/download-artifact@v2
+      with:
+        name: wheelstorage
+        path: dist
+
+    - name: Publish dist(s) to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        body: '{{ steps.date_tag.outputs.VERSION }}-released-${{ steps.date_tag.outputs.TODAY }}'
+        prerelease: true
+        files: ./dist/*
