@@ -92,8 +92,10 @@ def test_write(tmp_path):
 
 EXPECT_FAIL = {
     'fuzzing/0509e80afb379d16560e9e47bdd7d888bebdebc6.ttf',
+    'fuzzing/05a7abc8e4c954ef105d056bd6249c6fda96d4a8.otf',
     'fuzzing/07f054357ff8638bac3711b422a1e31180bba863.ttf',
     'fuzzing/10531f9105aa03bf6e0f9754ec8af33ed457ad5c.otf',
+    'fuzzing/18052b7fc1ca5c188b54864f163bebf80f488811.otf',
     'fuzzing/1a6f1687b7a221f9f2c834b0b360d3c8463b6daf.ttf',
     'fuzzing/1c2c3fc37b2d4c3cb2ef726c6cdaaabd4b7f3eb9.ttf',
     'fuzzing/205edd09bd3d141cc9580f650109556cc28b22cb.otf',
