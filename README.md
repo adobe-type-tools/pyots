@@ -46,7 +46,7 @@ result = pyots.sanitize('/path/to/font/file.ttf')
 import pyots
 from pathlib import Path
 
-for filename in Path("src/tests/fonts/good").rglob("*"):
+for filename in Path("src/ots/tests/fonts/good").rglob("*"):
     result = pyots.sanitize(filename.absolute())
     if not result.sanitized:
         print('{}:\n{}'.format(filename, "\n".join([m for m in result.messages])))
