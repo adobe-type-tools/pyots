@@ -276,13 +276,14 @@ with io.open("README.md", encoding="utf-8") as readme:
     long_description = readme.read()
 
 classifiers = [
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Testing',
     'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
 ]
@@ -299,7 +300,7 @@ setup(
     name='pyots',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
