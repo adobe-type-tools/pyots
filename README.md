@@ -14,17 +14,19 @@ Python wrapper for [OpenType Sanitizer](https://github.com/khaledhosny/ots), als
 The project builds `pip`-installable wheels for Python 3.7, 3.8, 3.9 or 3.10 under Mac or Linux. It is possible this project will build and run with other Pythons and other operating systems, but it has only been tested with the listed configurations.
 
 ## Installation with `pip`
-If you just want to _use_ `pyots`, you can simply run `pip install pyots` (in one of the supported platforms/Python versions) which will install pre-built, compiled, ready-to-use Python wheels. Then you can skip down to the [Use](#Use) section.
+If you just want to _use_ `pyots`, you can simply run `python -m pip install -U pyots` (in one of the supported platforms/Python versions) which will install pre-built, compiled, ready-to-use Python wheels. Then you can skip down to the [Use](#Use) section.
 
 ## Installation/setup for developing `pyots`
 If you'd like to tinker with the `pyots` code, you will want to get your local setup ready:
  - clone this repo
  - run `python setup.py download` to download the OTS source (which is _not included_ in this project). You can modify the `version` value in [`setup.cfg`](./setup.cfg) under `[download]` to specify a different version of OTS. You'll also need to change the `sha256` hash value that corresponds to the OTS tar.xz package. Note that this scheme has some limitations: OTS sources older than 8.1.3 might not build correctly since they used different build systems. Also, versions newer than the one specified in this repo might require adjustments in order to build correctly. What can we say, we're dependent on `ots`...
- - to build and install `pyots` after downloading OTS, you can run `python setup.py install` or `pip install .`
+ - to build and install `pyots` after downloading OTS, you can run `python setup.py install` or `python -m pip install .`
  - while iterating changes, you will want to delete the temporary `build` and `src/ots/build` folders.
 
 ## Testing
-There is a test suite defined for exercising the Python extension. It makes use (and assumes the presence of) the downloaded OTS library source's test font data in `src/ots` so ensure you have run `python setup.py download` and have the `ots` folder under `src`. Invoke the tests with `python -m pytest tests` *OR* `pytest tests` (make sure you specify `tests` folder, otherwise `pytest` will discover and attempt to execute other Python tests within the `ots` tree, which will probably fail)
+There is a test suite defined for exercising the Python extension. It makes use (and assumes the presence of) the downloaded OTS library source's test font data in `src/ots` so ensure you have run `python setup.py download` and have the `ots` folder under `src`. Invoke the tests with `python -m pytest`.
+
+If you wish to run tests comparing results from `ots-python` against `pyots`, be sure to `python -m pip install opentype-sanitizer` first, otherwise that set of tests will be skipped.
 
 ## Use
 Simplest case:
