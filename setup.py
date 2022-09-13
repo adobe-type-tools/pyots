@@ -20,9 +20,9 @@ SRC_SUB_DIR = OTS_SRC_DIR / "subprojects"
 # to avoid changing it with every new ots release (although it seems like every
 # release of ots has something that causes this build to break anyway so it's
 # not really that urgent. We just have to adjust every release.
-BROTLI_TAG = "1.0.7"
-LZ4_TAG = "1.9.3"
-WOFF2_TAG = "a0d0ed7da27b708c0a4e96ad7a998bddc933c06e"
+BROTLI_TAG = "1.0.9"
+LZ4_TAG = "1.9.4"
+WOFF2_TAG = "1.0.2"
 
 
 def _get_extra_objects():
