@@ -193,19 +193,18 @@ class Download(Command):
                     f.write(response.read())
                 f.seek(0)
 
-            # use hashlib to verify the SHA-256 hash
-            actual_sha256 = hashlib.sha256(f.getvalue()).hexdigest()
-            if actual_sha256 != self.sha256:
-                from distutils.errors import DistutilsSetupError
+                # use hashlib to verify the SHA-256 hash
+                actual_sha256 = hashlib.sha256(f.getvalue()).hexdigest()
+                if actual_sha256 != self.sha256:
+                    from distutils.errors import DistutilsSetupError
 
-                raise DistutilsSetupError(
-                    "invalid SHA-256 checksum:\n"
-                    "actual:   {}\n"
-                    "expected: {}".format(actual_sha256, self.sha256)
-                )
+                    raise DistutilsSetupError(
+                        "invalid SHA-256 checksum:\n"
+                        "actual:   {}\n"
+                        "expected: {}".format(actual_sha256, self.sha256)
+                    )
 
-            log.info("unarchiving {} to {}".format(archive_name, output_dir))
-            if not self.dry_run:
+                log.info("unarchiving {} to {}".format(archive_name, output_dir))
                 with lzma.open(f) as xz:
                     with tarfile.open(fileobj=xz) as tar:
                         filelist = tar.getmembers()
