@@ -32,7 +32,6 @@ def sanitize(input, output=None, quiet=False, font_index=-1) -> OTSResult:
         messages (string)   Messages generated during sanitzation (empty if
                             'quiet' was specified as True).
     """
-    # (san, mod, rmsg) = _pyots._sanitize(input, output or os.devnull, quiet, font_index)
     (san, mod, rmsg) = _pyots._sanitize(input, output or '', quiet, font_index)
 
     if rmsg is not None:

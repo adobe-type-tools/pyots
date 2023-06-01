@@ -19,11 +19,11 @@
 static PyObject* method_sanitize(PyObject* self, PyObject* args) {
   PyObject* pyInFilenameObj;
   PyObject* pyOutFilenameObj;
-  bool quiet;
+  int quiet = 0;
   int kwFontIndex = -1;
 
   /* parse the Python args */
-  if (!PyArg_ParseTuple(args, "O&O&pi",
+  if (!PyArg_ParseTuple(args, "O&O&ii",
                         PyUnicode_FSConverter, &pyInFilenameObj,
                         PyUnicode_FSConverter, &pyOutFilenameObj,
                         &quiet,

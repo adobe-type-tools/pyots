@@ -11,7 +11,7 @@ Python wrapper for [OpenType Sanitizer](https://github.com/khaledhosny/ots), als
 **NOTE:** Although this package is similar to **ots-python**, it is _not_ a drop-in replacement for it, as the Python API is different.
 
 ## Requirements
-The project builds `pip`-installable wheels for Python 3.7, 3.8, 3.9 or 3.10 under Mac or Linux. It is possible this project will build and run with other Pythons and other operating systems, but it has only been tested with the listed configurations.
+The project builds `pip`-installable wheels for Python 3.8, 3.9, 3.10 or 3.11 under Mac or Linux. It is possible this project will build and run with other Pythons and other operating systems, but it has only been tested with the listed configurations.
 
 ## Installation with `pip`
 If you just want to _use_ `pyots`, you can simply run `python -m pip install -U pyots` (in one of the supported platforms/Python versions) which will install pre-built, compiled, ready-to-use Python wheels. Then you can skip down to the [Use](#Use) section.

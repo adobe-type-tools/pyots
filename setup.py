@@ -265,7 +265,7 @@ custom_commands = {
 pyots_mod = Extension(
     name='_pyots',
     libraries=['z'],
-    extra_compile_args=['-fPIC', '-std=c++17'],
+    extra_compile_args=['-fPIC', '-std=c++11'],
     extra_objects=_get_extra_objects(),
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
@@ -279,10 +279,10 @@ classifiers = [
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Testing',
     'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
 ]
