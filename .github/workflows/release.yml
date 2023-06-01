@@ -41,8 +41,9 @@ jobs:
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: "cp37-* cp38-* cp39-* cp310-*"
-        CIBW_ARCHS_MACOS: x86_64 universal2
+        CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
+        CIBW_ARCHS_MACOS: x86_64 arm64
+        CIBW_ENVIRONMENT_MACOS: "CFLAGS='-arch arm64 -arch x86_64' CXXFLAGS='-arch arm64 -arch x86_64' LDFLAGS='-arch arm64 -arch x86_64'"
         CIBW_ARCHS_LINUX: x86_64
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
         CIBW_SKIP: "*musllinux*"
@@ -73,10 +74,10 @@ jobs:
       run: |
         export DATE=$(TZ=US/Pacific date +'%Y-%m-%d')
         echo $DATE
-        export FLAT_TAG=$(echo ${GITHUB_REF##*/} | sed 's/\.//g')
+        export FLAT_TAG=$(echo ${GITHUB_REF##*/})
         echo $FLAT_TAG
-        echo ::set-output name=TODAY::$DATE
-        echo ::set-output name=VERSION::$FLAT_TAG
+        echo "TODAY=$DATE" >> "$GITHUB_OUTPUT"
+        echo "VERSION=$FLAT_TAG" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Download release assets
@@ -96,6 +97,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        body: '{{ steps.date_tag.outputs.VERSION }}-released-${{ steps.date_tag.outputs.TODAY }}'
+        body: '${{ steps.date_tag.outputs.VERSION }} released ${{ steps.date_tag.outputs.TODAY }} - [Upstream OTS v${{ steps.date_tag.outputs.VERSION }} Release Notes](https://github.com/khaledhosny/ots/releases/tag/v${{ steps.date_tag.outputs.VERSION }})'
         prerelease: true
         files: ./dist/*

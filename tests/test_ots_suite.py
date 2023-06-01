@@ -49,7 +49,7 @@ def test_ots_bad():
             count += 1
             print("[bad] unexpected success on", f, "\n".join(r.messages))
 
-    assert not count, f"{count} file{'s were' if count != 1 else 'was'} sanitized when expected to be sanitized."  # noqa: E501
+    assert not count, f"{count} file{'s were' if count != 1 else 'was'} sanitized successfully when expected to fail."  # noqa: E501
 
 
 def test_ots_fuzzing():
