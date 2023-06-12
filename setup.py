@@ -299,7 +299,7 @@ setup(
     name='pyots',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
