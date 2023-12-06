@@ -86,6 +86,8 @@ def main(args=None):
         make(*options.targets, clean=options.force)
     except subprocess.CalledProcessError as e:
         return e.returncode
+    
+    return 0
 
 
 if __name__ == "__main__":
