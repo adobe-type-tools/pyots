@@ -87,6 +87,8 @@ def main(args=None):
     except subprocess.CalledProcessError as e:
         return e.returncode
 
+    return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
