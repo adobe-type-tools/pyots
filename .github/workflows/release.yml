@@ -95,7 +95,7 @@ jobs:
         password: ${{ secrets.pypi_password }}
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         body: '${{ steps.date_tag.outputs.VERSION }} released ${{ steps.date_tag.outputs.TODAY }} - [Upstream OTS v${{ steps.date_tag.outputs.VERSION }} Release Notes](https://github.com/khaledhosny/ots/releases/tag/v${{ steps.date_tag.outputs.VERSION }})'
         prerelease: true
