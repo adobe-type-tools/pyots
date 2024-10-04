@@ -41,7 +41,7 @@ jobs:
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
+        CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
         CIBW_ARCHS_MACOS: x86_64 arm64
         CIBW_ENVIRONMENT_MACOS: "CFLAGS='-arch arm64 -arch x86_64' CXXFLAGS='-arch arm64 -arch x86_64' LDFLAGS='-arch arm64 -arch x86_64'"
         CIBW_ARCHS_LINUX: x86_64
