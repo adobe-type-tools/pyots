@@ -67,6 +67,7 @@ jobs:
     needs: build_wheels
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write  # Required by 'action-gh-release'
 
     steps:
@@ -96,9 +97,6 @@ jobs:
 
     - name: Publish dist(s) to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
