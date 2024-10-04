@@ -57,7 +57,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: wheelstorage
+        name: wheelstorage-${{ matrix.os }}
         path: ./dist/*
         if-no-files-found: error
         retention-days: 30
@@ -82,10 +82,16 @@ jobs:
         echo "VERSION=$FLAT_TAG" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - name: Download release assets
+    - name: Download release assets for ubutu-latest
       uses: actions/download-artifact@v4
       with:
-        name: wheelstorage
+        name: wheelstorage-ubuntu-latest
+        path: dist
+
+    - name: Download release assets for macos-latest
+      uses: actions/download-artifact@v4
+      with:
+        name: wheelstorage-macos-latest
         path: dist
 
     - name: Publish dist(s) to PyPI
