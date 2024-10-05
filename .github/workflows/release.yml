@@ -36,12 +36,16 @@ jobs:
       with:
         python-version: '3.9'
 
+    - name: Set up msbuild (Windows only)
+      uses: microsoft/setup-msbuild@v1.0.2
+      if: startsWith(matrix.os, 'windows')
+
     - name: Build wheel
       uses: pypa/cibuildwheel@v2.21.2
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
+        CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
         CIBW_ARCHS_MACOS: x86_64 arm64
         CIBW_ENVIRONMENT_MACOS: "CFLAGS='-arch arm64 -arch x86_64' CXXFLAGS='-arch arm64 -arch x86_64' LDFLAGS='-arch arm64 -arch x86_64'"
         CIBW_ARCHS_LINUX: x86_64
@@ -57,16 +61,21 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: wheelstorage
+        name: wheelstorage-${{ matrix.os }}
         path: ./dist/*
         if-no-files-found: error
         retention-days: 30
 
   publish_release:
     name: Publish Release
-    needs: build_wheels
+    needs: 
+      - build_wheels
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     permissions:
+      id-token: write
       contents: write  # Required by 'action-gh-release'
 
     steps:
@@ -82,17 +91,14 @@ jobs:
         echo "VERSION=$FLAT_TAG" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - name: Download release assets
+    - name: Download release assets for ${{ matrix.os }}
       uses: actions/download-artifact@v4
       with:
-        name: wheelstorage
+        name: wheelstorage-${{ matrix.os }}
         path: dist
 
     - name: Publish dist(s) to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
