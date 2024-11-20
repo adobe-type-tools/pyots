@@ -37,7 +37,7 @@ jobs:
         python-version: '3.9'
 
     - name: Set up msbuild (Windows only)
-      uses: microsoft/setup-msbuild@v1.3.3
+      uses: microsoft/setup-msbuild@v2.0.0
       if: startsWith(matrix.os, 'windows')
 
     - name: Build wheel
