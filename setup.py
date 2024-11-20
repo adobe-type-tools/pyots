@@ -20,7 +20,7 @@ SRC_SUB_DIR = OTS_SRC_DIR / "subprojects"
 # to avoid changing it with every new ots release (although it seems like every
 # release of ots has something that causes this build to break anyway so it's
 # not really that urgent. We just have to adjust every release.
-BROTLI_TAG = "1.0.9"
+BROTLI_TAG = "1.1.0"
 LZ4_TAG = "1.9.4"
 WOFF2_TAG = "1.0.2"
 
@@ -279,10 +279,10 @@ classifiers = [
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Testing',
     'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
 ]
@@ -299,7 +299,7 @@ setup(
     name='pyots',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     url='https://github.com/adobe-type-tools/pyots',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
