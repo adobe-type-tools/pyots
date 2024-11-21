@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '\d+\.\d+\.[0-9a-z]+'
+      - '\d+\.\d+\.[0-9a-z]+\.post\d+'
 
   workflow_dispatch:
     inputs:
