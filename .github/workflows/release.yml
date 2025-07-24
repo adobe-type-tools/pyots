@@ -42,7 +42,7 @@ jobs:
       if: startsWith(matrix.os, 'windows')
 
     - name: Build wheel
-      uses: pypa/cibuildwheel@v3.0.1
+      uses: pypa/cibuildwheel@v3.1.0
       with:
         output-dir: dist
       env:
