@@ -19,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for setuptools_scm
 
     - name: Log reason (manual run only)
       if: github.event_name == 'workflow_dispatch'
@@ -30,21 +32,31 @@ jobs:
       with:
         python-version: 3.13
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential pkg-config zlib1g-dev libtool autotools-dev
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install setuptools>=61.0
         python -m pip install -r requirements.txt
+        python -m pip install opentype-sanitizer
+
+    - name: Download OTS source
+      run: |
+        python setup.py download --version=9.2.0 --sha256=1a1e50cd7ecea27c4ef04c5b1491c21e75555f35bf91e27103ede04ddd11e053
     
     - name: Lint with flake8
       run: flake8 . --show-source --statistics
     
     - name: Lint with cpplint
-      run: cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive .
+      run: cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive src/_pyots/
     
     - name: Build and install
       run: |
-        python setup.py install
+        python -m pip install -v .
     
     - name: Test with pytest
       run: |

@@ -1,5 +1,41 @@
 [build-system]
 requires = ["setuptools>=61", "wheel", "setuptools_scm[toml]>=3.4", "ninja", "meson"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyots"
+description = "Python wrapper for ot-sanitizer"
+readme = "README.md"
+license = "BSD-3-Clause"
+authors = [
+    {name = "Adobe Type team & friends", email = "afdko@adobe.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/adobe-type-tools/pyots"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 testpaths = [

@@ -1,16 +1,25 @@
-from build import SRC_DIR, OTS_SRC_DIR
 from distutils.dir_util import mkpath, remove_tree
 from distutils import log
 import io
 import os
 import re
-from setuptools import setup, find_packages, Extension, Command
+from pathlib import Path
+from setuptools import setup, Extension, Command
 from setuptools.command import build_py
 from setuptools.command.egg_info import egg_info
 import subprocess
 import sys
 
 PY = sys.executable
+
+# Define paths (previously imported from build.py)
+try:
+    ROOT = Path(__file__).parent.resolve()
+except NameError:
+    # Fallback for when __file__ is not defined
+    ROOT = Path.cwd()
+SRC_DIR = ROOT / "src"
+OTS_SRC_DIR = SRC_DIR / "ots"
 
 BUILD_DIR = OTS_SRC_DIR / "build" / "meson"
 BUILD_SUB_DIR = BUILD_DIR / "subprojects"
@@ -47,7 +56,7 @@ def _get_extra_objects():
     # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_decoder.a")
     # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_common.a")
 
-    return [str(p) for p in xo]
+    return [str(p.relative_to(ROOT)) for p in xo]
 
 
 def _get_include_dirs():
@@ -69,7 +78,7 @@ def _get_include_dirs():
     # woff2
     ip.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "include")
 
-    return [str(p) for p in ip]
+    return [str(p.relative_to(ROOT)) for p in ip]
 
 
 def _get_sources():
@@ -87,7 +96,7 @@ def _get_sources():
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_dec.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_out.cc")
 
-    return [str(p) for p in sp]
+    return [str(p.relative_to(ROOT)) for p in sp]
 
 
 class BuildStaticLibs(Command):
@@ -271,37 +280,7 @@ pyots_mod = Extension(
     sources=_get_sources(),
 )
 
-with io.open("README.md", encoding="utf-8") as readme:
-    long_description = readme.read()
-
-classifiers = [
-    'Development Status :: 4 - Beta',
-    'Intended Audience :: Developers',
-    'Topic :: Software Development :: Testing',
-    'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
-    'Programming Language :: Python :: 3.12',
-    'Operating System :: MacOS :: MacOS X',
-    'Operating System :: POSIX :: Linux',
-]
-
 setup(
-    author='Adobe Type team & friends',
-    author_email='afdko@adobe.com',
     cmdclass=custom_commands,
-    classifiers=classifiers,
-    description='Python wrapper for ot-sanitizer',
     ext_modules=[pyots_mod],
-    long_description_content_type='text/markdown',
-    long_description=long_description,
-    name='pyots',
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
-    python_requires='>=3.9',
-    url='https://github.com/adobe-type-tools/pyots',
-    use_scm_version=True,
-    setup_requires=['setuptools_scm'],
-    zip_safe=False,
 )
