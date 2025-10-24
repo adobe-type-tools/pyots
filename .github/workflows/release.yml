@@ -60,7 +60,7 @@ jobs:
         python setup.py sdist
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: wheelstorage-${{ matrix.os }}
         path: ./dist/*
@@ -93,7 +93,7 @@ jobs:
       shell: bash
 
     - name: Download release assets for ${{ matrix.os }}
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: wheelstorage-${{ matrix.os }}
         path: dist
