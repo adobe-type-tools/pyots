@@ -1,8 +1,8 @@
-from distutils.dir_util import mkpath, remove_tree
 from distutils import log
 import io
 import os
 import re
+import shutil
 from pathlib import Path
 from setuptools import setup, Extension, Command
 from setuptools.command import build_py
@@ -182,16 +182,18 @@ class Download(Command):
 
         output_dir = os.path.join(self.download_dir, "ots")
         if self.clean and os.path.isdir(output_dir):
-            remove_tree(output_dir, verbose=self.verbose, dry_run=self.dry_run)
+            log.info("removing '{}'".format(output_dir))
+            if not self.dry_run:
+                shutil.rmtree(output_dir)
 
         if os.path.isdir(output_dir):
             log.info("{} was already downloaded".format(output_dir))
         else:
             archive_name = self.url.rsplit("/", 1)[-1]
 
-            mkpath(self.download_dir,
-                   verbose=self.verbose,
-                   dry_run=self.dry_run)
+            log.info("creating '{}'".format(self.download_dir))
+            if not self.dry_run:
+                os.makedirs(self.download_dir, exist_ok=True)
 
             log.info("downloading {}".format(self.url))
             if not self.dry_run:
