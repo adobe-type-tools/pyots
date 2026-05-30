@@ -8,7 +8,7 @@ import _pyots
 version = _pyots.version
 
 
-class OTSResult():
+class OTSResult:
     def __init__(self, raw_tuple):
         self.sanitized = bool(raw_tuple[0])
         self.modified = bool(raw_tuple[1])
@@ -32,14 +32,14 @@ def sanitize(input, output=None, quiet=False, font_index=-1) -> OTSResult:
         messages (string)   Messages generated during sanitzation (empty if
                             'quiet' was specified as True).
     """
-    (san, mod, rmsg) = _pyots._sanitize(input, output or '', quiet, font_index)
+    (san, mod, rmsg) = _pyots._sanitize(input, output or "", quiet, font_index)
 
     if rmsg is not None:
         if isinstance(rmsg, bytes):
-            msg = rmsg.decode('ascii', errors='backslashreplace')
+            msg = rmsg.decode("ascii", errors="backslashreplace")
         else:
             msg = rmsg
     else:
-        msg = ''
+        msg = ""
 
     return OTSResult((san, mod, msg))

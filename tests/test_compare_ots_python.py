@@ -14,6 +14,7 @@ import pyots
 
 try:
     import ots
+
     have_ots = True
 except ImportError:
     have_ots = False
@@ -27,9 +28,9 @@ def _get_ots_result(path):
     Sanitize with ots-python and process the result.
     """
     ots_out = ots.sanitize(path, capture_output=True)
-    sanitized = b'File sanitized successfully!' in ots_out.stdout
+    sanitized = b"File sanitized successfully!" in ots_out.stdout
     modified = sanitized
-    messages = ots_out.stderr.decode('ascii', errors="ignore")
+    messages = ots_out.stderr.decode("ascii", errors="ignore")
 
     return pyots.OTSResult((sanitized, modified, messages))
 
@@ -77,12 +78,13 @@ def cmp_times():
     If you want to compare, you can do:
         python -c "from tests.test_compare_ots_python import cmp_times; cmp_times()"
     """
-    fd = {"pyots": functools.partial(pyots.sanitize, quiet=False),
-          "ots-python": functools.partial(ots.sanitize, capture_output=True)}
+    fd = {
+        "pyots": functools.partial(pyots.sanitize, quiet=False),
+        "ots-python": functools.partial(ots.sanitize, capture_output=True),
+    }
     rd = {k: 0.0 for k in fd.keys()}
 
     for name, sanitize_method in fd.items():
-
         start = timeit.default_timer()
         for subdir in ("good", "bad", "fuzzing"):
             tld = TEST_FONTS_DIR / subdir
@@ -93,5 +95,5 @@ def cmp_times():
 
         rd[name] = end - start
 
-    xtime = (rd['ots-python'] / rd['pyots'])
+    xtime = rd["ots-python"] / rd["pyots"]
     print(f"[timings] pyots: {rd['pyots']}, ots-python: {rd['ots-python']} ({round(xtime, 1)}x)")
