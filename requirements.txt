@@ -1,6 +1,5 @@
-black
 cpplint
-flake8
-pytest
 meson
 ninja
+pytest
+ruff

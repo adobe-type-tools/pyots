@@ -67,7 +67,7 @@ def _get_include_dirs():
         BUILD_DIR,
         SRC_DIR / "_pyots",
         OTS_SRC_DIR / "include",
-        ]
+    ]
 
     # lz4
     ip.append(SRC_SUB_DIR / f"lz4-{LZ4_TAG}" / "lib")
@@ -103,7 +103,8 @@ class BuildStaticLibs(Command):
     """
     Custom command to run build.py script prior to building Extension
     """
-    description = 'Build ots static libs from source with meson/ninja'
+
+    description = "Build ots static libs from source with meson/ninja"
     user_options = []
 
     def run(self):
@@ -121,13 +122,13 @@ class BuildPy(build_py.build_py):
     """
     Custom python build command. Calls 'build_static' prior to Python build.
     """
+
     def run(self):
-        self.run_command('build_static')
+        self.run_command("build_static")
         build_py.build_py.run(self)
 
 
 class CustomEggInfo(egg_info):
-
     def run(self):
         # make sure the ots source is downloaded before creating sdist manifest
         self.run_command("download")
@@ -135,21 +136,15 @@ class CustomEggInfo(egg_info):
 
 
 class Download(Command):
-
     user_options = [
         ("version=", None, "ots source version number to download"),
         ("sha256=", None, "expected SHA-256 hash of the source archive"),
-        ("download-dir=",
-         "d",
-         "where to unpack the 'ots' dir (default: src)"),
+        ("download-dir=", "d", "where to unpack the 'ots' dir (default: src)"),
         ("clean", None, "remove existing directory before downloading"),
     ]
     boolean_options = ["clean"]
 
-    URL_TEMPLATE = (
-        "https://github.com/khaledhosny/ots/releases/download/"
-        "v{version}/ots-{version}.tar.xz"
-    )
+    URL_TEMPLATE = "https://github.com/khaledhosny/ots/releases/download/v{version}/ots-{version}.tar.xz"
 
     def initialize_options(self):
         self.version = None
@@ -166,8 +161,7 @@ class Download(Command):
         if self.sha256 is None:
             from distutils.errors import DistutilsSetupError
 
-            raise DistutilsSetupError(
-                "must specify --sha256 of downloaded file")
+            raise DistutilsSetupError("must specify --sha256 of downloaded file")
 
         if self.download_dir is None:
             self.download_dir = "src"
@@ -210,9 +204,9 @@ class Download(Command):
                     from distutils.errors import DistutilsSetupError
 
                     raise DistutilsSetupError(
-                        "invalid SHA-256 checksum:\n"
-                        "actual:   {}\n"
-                        "expected: {}".format(actual_sha256, self.sha256)
+                        "invalid SHA-256 checksum:\nactual:   {}\nexpected: {}".format(
+                            actual_sha256, self.sha256
+                        )
                     )
 
                 log.info("unarchiving {} to {}".format(archive_name, output_dir))
@@ -224,15 +218,14 @@ class Download(Command):
                             from distutils.errors import DistutilsSetupError
 
                             raise DistutilsSetupError(
-                                "The downloaded archive is not recognized as "
-                                "a valid ots source tarball"
+                                "The downloaded archive is not recognized as a valid ots source tarball"
                             )
                         # strip the root 'ots-X.X.X' directory first
                         rootdir = first.name + "/"
                         to_extract = []
                         for member in filelist[1:]:
                             if member.name.startswith(rootdir):
-                                member.name = member.name[len(rootdir):]
+                                member.name = member.name[len(rootdir) :]
                                 to_extract.append(member)
                         tar.extractall(output_dir, members=to_extract)
 
@@ -240,11 +233,11 @@ class Download(Command):
 
             # updates to meson.build for custom dylib build
             if not self.dry_run:
-                with open("src/ots/meson.build", 'r') as f:
+                with open("src/ots/meson.build", "r") as f:
                     meson = f.read()
 
                     # back up original
-                    with open("src/ots/meson.build.orig", 'w') as f_out:
+                    with open("src/ots/meson.build.orig", "w") as f_out:
                         f_out.write(meson)
 
                 # update default_options
@@ -256,27 +249,27 @@ class Download(Command):
                 # remove unused ('executable('ots-sanitize' and all after)
                 meson = re.sub(
                     r"ots_sanitize = executable\('ots-sanitize',(.+)",
-                    '',
+                    "",
                     meson,
                     flags=re.MULTILINE | re.DOTALL,
                 )
 
                 # save it
-                with open("src/ots/meson.build", 'w') as f:
+                with open("src/ots/meson.build", "w") as f:
                     f.write(meson)
 
 
 custom_commands = {
-    'build_py': BuildPy,
-    'build_static': BuildStaticLibs,
-    'download': Download,
-    'egg_info': CustomEggInfo
+    "build_py": BuildPy,
+    "build_static": BuildStaticLibs,
+    "download": Download,
+    "egg_info": CustomEggInfo,
 }
 
 pyots_mod = Extension(
-    name='_pyots',
-    libraries=['z'],
-    extra_compile_args=['-fPIC', '-std=c++11'],
+    name="_pyots",
+    libraries=["z"],
+    extra_compile_args=["-fPIC", "-std=c++11"],
     extra_objects=_get_extra_objects(),
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),

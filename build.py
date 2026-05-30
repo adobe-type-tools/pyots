@@ -2,6 +2,7 @@
 """
 Run meson and ninja to build the ots static libs from source.
 """
+
 import sys
 from pathlib import Path
 import os
@@ -18,7 +19,7 @@ OTS_SRC_DIR = SRC_DIR / "ots"
 SUB_DIR = OTS_SRC_DIR / "subprojects"
 
 
-if 'manylinux' in os.environ.get("AUDITWHEEL_PLAT", ''):
+if "manylinux" in os.environ.get("AUDITWHEEL_PLAT", ""):
     os.environ["PATH"] += os.pathsep + os.path.dirname(sys.executable)
 
 TOOLS = {
@@ -57,18 +58,14 @@ def configure(reconfigure=False):
     if not (BUILD_DIR / "build.ninja").exists():
         subprocess.run(MESON_CMD, check=True, env=os.environ)
     elif reconfigure:
-        subprocess.run(MESON_CMD + ["--reconfigure"],
-                       check=True,
-                       env=os.environ)
+        subprocess.run(MESON_CMD + ["--reconfigure"], check=True, env=os.environ)
 
 
 def make(*targets, clean=False):
     print(f"build.py: Running {' '.join(NINJA_CMD)}")
     targets = list(targets)
     if clean:
-        subprocess.run(NINJA_CMD + ["-t", "clean"] + targets,
-                       check=True,
-                       env=os.environ)
+        subprocess.run(NINJA_CMD + ["-t", "clean"] + targets, check=True, env=os.environ)
     subprocess.run(NINJA_CMD + targets, check=True, env=os.environ)
 
 

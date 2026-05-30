@@ -37,6 +37,10 @@ where = ["src"]
 
 [tool.setuptools_scm]
 
+[tool.ruff]
+line-length = 110
+exclude = ["src/ots", "venv", ".eggs"]
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
