@@ -48,8 +48,11 @@ jobs:
       run: |
         python setup.py download --version=9.2.0 --sha256=1a1e50cd7ecea27c4ef04c5b1491c21e75555f35bf91e27103ede04ddd11e053
     
-    - name: Lint with flake8
-      run: flake8 . --show-source --statistics
+    - name: Lint with ruff
+      run: ruff check .
+
+    - name: Check formatting with ruff
+      run: ruff format --check .
     
     - name: Lint with cpplint
       run: cpplint --filter=-build/includesubdir,-readability/casting,-build/include --recursive src/_pyots/
