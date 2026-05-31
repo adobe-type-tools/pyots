@@ -49,10 +49,6 @@ jobs:
       with:
         output-dir: dist
       env:
-        # use the 'pip' build frontend: cibuildwheel v3 defaults to
-        # 'python -m build', which (run from the project root) imports our
-        # top-level build.py instead of the pypa/build package and fails
-        CIBW_BUILD_FRONTEND: pip
         CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
         CIBW_ARCHS_MACOS: x86_64 arm64
         CIBW_ENVIRONMENT_MACOS: "CFLAGS='-arch arm64 -arch x86_64' CXXFLAGS='-arch arm64 -arch x86_64' LDFLAGS='-arch arm64 -arch x86_64'"
@@ -65,10 +61,8 @@ jobs:
     - name: Build sdist (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        # Python 3.12+ no longer bundles setuptools, so install the sdist
-        # build deps before invoking setup.py directly
-        python -m pip install "setuptools>=61.0" setuptools_scm
-        python setup.py sdist
+        python -m pip install build
+        python -m build --sdist
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

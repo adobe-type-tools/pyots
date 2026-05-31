@@ -61,7 +61,7 @@ def check_tools():
 
 
 def configure(reconfigure=False):
-    print(f"build.py: Running {' '.join(MESON_CMD)}")
+    print(f"build_ots.py: Running {' '.join(MESON_CMD)}")
     if not (BUILD_DIR / "build.ninja").exists():
         subprocess.run(MESON_CMD, check=True, env=os.environ)
     elif reconfigure:
@@ -69,7 +69,7 @@ def configure(reconfigure=False):
 
 
 def make(*targets, clean=False):
-    print(f"build.py: Running {' '.join(NINJA_CMD)}")
+    print(f"build_ots.py: Running {' '.join(NINJA_CMD)}")
     targets = list(targets)
     if clean:
         subprocess.run(NINJA_CMD + ["-t", "clean"] + targets, check=True, env=os.environ)

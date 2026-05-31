@@ -19,7 +19,7 @@ PY = sys.executable
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 log = logging.getLogger("pyots.setup")
 
-# Define paths (previously imported from build.py)
+# Define paths (previously imported from build_ots.py)
 try:
     ROOT = Path(__file__).parent.resolve()
 except NameError:
@@ -80,7 +80,7 @@ def _get_extra_objects():
     xo.append(_find_static_lib(lz4_dir, "lz4"))
 
     # zlib -- on Windows there's no system zlib, so meson builds it from the
-    # subproject fallback (see build.py) and we link it statically here. On
+    # subproject fallback (see build_ots.py) and we link it statically here. On
     # Linux/macOS the system zlib is linked via libraries=["z"] instead.
     if IS_WINDOWS:
         zlib_dirs = sorted(BUILD_SUB_DIR.glob("zlib-*"))
@@ -145,14 +145,14 @@ def _get_sources():
 
 class BuildStaticLibs(Command):
     """
-    Custom command to run build.py script prior to building Extension
+    Custom command to run build_ots.py script prior to building Extension
     """
 
     description = "Build ots static libs from source with meson/ninja"
     user_options = []
 
     def run(self):
-        cmd = [PY, "build.py"]
+        cmd = [PY, "build_ots.py"]
         subprocess.check_call(cmd)
 
     def initialize_options(self):
@@ -177,7 +177,7 @@ class BuildExt(build_ext):
     Custom build_ext that resolves the static libs to link against at build
     time. This must be deferred until here (rather than when the Extension is
     constructed at module load) because the libs don't exist on disk until
-    build.py has compiled them.
+    build_ots.py has compiled them.
     """
 
     def run(self):
@@ -329,7 +329,7 @@ pyots_mod = Extension(
     name="_pyots",
     libraries=libraries,
     extra_compile_args=extra_compile_args,
-    # extra_objects is populated at build time by BuildExt, once build.py has
+    # extra_objects is populated at build time by BuildExt, once build_ots.py has
     # compiled the static libs
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
