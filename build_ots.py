@@ -31,8 +31,16 @@ TOOLS = {
 # subproject fallback (on Linux/macOS the system zlib is used and linked via
 # the extension's libraries=["z"]).
 FALLBACK_LIBS = "libbrotlidec,liblz4"
+
+# On Windows force meson to activate the Visual Studio (MSVC) environment via
+# its built-in vswhere/vcvars detection. Without --vsenv, meson would pick up
+# the gcc/clang that GitHub's windows runners ship on PATH, producing static
+# libs with a different ABI than the MSVC-built extension. --vsenv makes meson
+# find cl.exe itself, so no external MSVC-setup action is needed.
+WIN_MESON_ARGS = []
 if sys.platform == "win32":
     FALLBACK_LIBS += ",zlib"
+    WIN_MESON_ARGS = ["--vsenv"]
 
 MESON_CMD = [
     TOOLS["meson"],
@@ -41,6 +49,7 @@ MESON_CMD = [
     "--strip",
     "--default-library=static",
     f"--force-fallback-for={FALLBACK_LIBS}",
+    *WIN_MESON_ARGS,
     str(BUILD_DIR),
     str(OTS_SRC_DIR),
 ]
