@@ -5,7 +5,7 @@ on:
     paths-ignore:
     - README*
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       reason:
@@ -14,11 +14,11 @@ on:
 
 jobs:
   build:
-
+    name: Build & test (Linux)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0  # Fetch full history for setuptools_scm
 
@@ -28,7 +28,7 @@ jobs:
         echo "Reason for triggering: ${{ github.event.inputs.reason }}"
 
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: 3.14
 
@@ -60,7 +60,39 @@ jobs:
     - name: Build and install
       run: |
         python -m pip install -v .
-    
+
+    - name: Test with pytest
+      run: |
+        pytest -v tests
+
+  build-windows:
+    name: Build & test (Windows)
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0  # Fetch full history for setuptools_scm
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: 3.14
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install setuptools>=61.0
+        python -m pip install -r requirements.txt
+
+    - name: Download OTS source
+      run: |
+        python setup.py download --version=9.2.0 --sha256=1a1e50cd7ecea27c4ef04c5b1491c21e75555f35bf91e27103ede04ddd11e053
+
+    - name: Build and install
+      run: |
+        python -m pip install -v .
+
     - name: Test with pytest
       run: |
         pytest -v tests

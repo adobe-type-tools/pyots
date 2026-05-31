@@ -63,7 +63,7 @@ def test_ots_fuzzing():
 
         r = pyots.sanitize(f)
 
-        if str(f.relative_to(TEST_FONTS_DIR)) in EXPECT_FAIL:
+        if f.relative_to(TEST_FONTS_DIR).as_posix() in EXPECT_FAIL:
             if r.sanitized:
                 count += 1
                 print("[fuzzing] unexpected success on", f, "\n".join(r.messages))
