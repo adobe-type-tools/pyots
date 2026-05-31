@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 from setuptools import setup, Extension, Command
 from setuptools.command import build_py
+from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 import subprocess
 import sys
@@ -165,6 +166,20 @@ class BuildPy(build_py.build_py):
         build_py.build_py.run(self)
 
 
+class BuildExt(build_ext):
+    """
+    Custom build_ext that resolves the static libs to link against at build
+    time. This must be deferred until here (rather than when the Extension is
+    constructed at module load) because the libs don't exist on disk until
+    build.py has compiled them.
+    """
+
+    def run(self):
+        for ext in self.extensions:
+            ext.extra_objects = _get_extra_objects()
+        build_ext.run(self)
+
+
 class CustomEggInfo(egg_info):
     def run(self):
         # make sure the ots source is downloaded before creating sdist manifest
@@ -298,6 +313,7 @@ class Download(Command):
 
 custom_commands = {
     "build_py": BuildPy,
+    "build_ext": BuildExt,
     "build_static": BuildStaticLibs,
     "download": Download,
     "egg_info": CustomEggInfo,
@@ -315,7 +331,8 @@ pyots_mod = Extension(
     name="_pyots",
     libraries=libraries,
     extra_compile_args=extra_compile_args,
-    extra_objects=_get_extra_objects(),
+    # extra_objects is populated at build time by BuildExt, once build.py has
+    # compiled the static libs
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
 )
