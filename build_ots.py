@@ -54,7 +54,7 @@ MESON_CMD = [
     str(OTS_SRC_DIR),
 ]
 
-NINJA_CMD = [TOOLS["ninja"], "-C", str(BUILD_DIR)]
+MESON_COMPILE_CMD = [TOOLS["meson"], "compile", "-C", str(BUILD_DIR)]
 
 
 class ExecutableNotFound(FileNotFoundError):
@@ -78,22 +78,15 @@ def configure(reconfigure=False):
 
 
 def make(*targets, clean=False):
+    # Build through 'meson compile' rather than invoking ninja directly. On
+    # Windows this re-activates the MSVC environment (stored by --vsenv at
+    # configure time) so cl.exe is on PATH for the compile step; on other
+    # platforms it simply drives the ninja backend.
     targets = list(targets)
-    if sys.platform == "win32":
-        # Build through 'meson compile' rather than invoking ninja directly: it
-        # re-activates the MSVC environment (stored by --vsenv at configure
-        # time) so cl.exe is on PATH for the compile step. Bare ninja runs in a
-        # separate process that wouldn't inherit that environment.
-        build_cmd = [TOOLS["meson"], "compile", "-C", str(BUILD_DIR)]
-        print(f"build_ots.py: Running {' '.join(build_cmd)}")
-        if clean:
-            subprocess.run(build_cmd + ["--clean"], check=True, env=os.environ)
-        subprocess.run(build_cmd + targets, check=True, env=os.environ)
-        return
-    print(f"build_ots.py: Running {' '.join(NINJA_CMD)}")
+    print(f"build_ots.py: Running {' '.join(MESON_COMPILE_CMD)}")
     if clean:
-        subprocess.run(NINJA_CMD + ["-t", "clean"] + targets, check=True, env=os.environ)
-    subprocess.run(NINJA_CMD + targets, check=True, env=os.environ)
+        subprocess.run(MESON_COMPILE_CMD + ["--clean"], check=True, env=os.environ)
+    subprocess.run(MESON_COMPILE_CMD + targets, check=True, env=os.environ)
 
 
 def main(args=None):
