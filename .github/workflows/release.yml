@@ -72,8 +72,9 @@ jobs:
 
   publish_release:
     name: Publish Release
-    needs: 
+    needs:
       - build_wheels
+    if: startsWith(github.ref, 'refs/tags/')  # only publish on tag releases
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -106,6 +107,7 @@ jobs:
       with:
         attestations: true
         verbose: true
+        skip-existing: true  # don't fail if a filename was already uploaded
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
