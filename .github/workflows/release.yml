@@ -65,6 +65,9 @@ jobs:
     - name: Build sdist (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
       run: |
+        # Python 3.12+ no longer bundles setuptools, so install the sdist
+        # build deps before invoking setup.py directly
+        python -m pip install "setuptools>=61.0" setuptools_scm
         python setup.py sdist
 
     - name: Upload build artifacts
