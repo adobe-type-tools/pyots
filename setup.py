@@ -1,5 +1,5 @@
-from distutils import log
 import io
+import logging
 import os
 import re
 import shutil
@@ -8,10 +8,16 @@ from setuptools import setup, Extension, Command
 from setuptools.command import build_py
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
+from setuptools.errors import SetupError
 import subprocess
 import sys
 
 PY = sys.executable
+
+# distutils was removed from the stdlib in Python 3.12 (PEP 632), so use the
+# stdlib logging module instead of distutils.log for informational output
+logging.basicConfig(format="%(message)s", level=logging.INFO)
+log = logging.getLogger("pyots.setup")
 
 # Define paths (previously imported from build.py)
 try:
@@ -206,14 +212,10 @@ class Download(Command):
 
     def finalize_options(self):
         if self.version is None:
-            from distutils.errors import DistutilsSetupError
-
-            raise DistutilsSetupError("must specify --version to download")
+            raise SetupError("must specify --version to download")
 
         if self.sha256 is None:
-            from distutils.errors import DistutilsSetupError
-
-            raise DistutilsSetupError("must specify --sha256 of downloaded file")
+            raise SetupError("must specify --sha256 of downloaded file")
 
         if self.download_dir is None:
             self.download_dir = "src"
@@ -253,9 +255,7 @@ class Download(Command):
                 # use hashlib to verify the SHA-256 hash
                 actual_sha256 = hashlib.sha256(f.getvalue()).hexdigest()
                 if actual_sha256 != self.sha256:
-                    from distutils.errors import DistutilsSetupError
-
-                    raise DistutilsSetupError(
+                    raise SetupError(
                         "invalid SHA-256 checksum:\nactual:   {}\nexpected: {}".format(
                             actual_sha256, self.sha256
                         )
@@ -267,9 +267,7 @@ class Download(Command):
                         filelist = tar.getmembers()
                         first = filelist[0]
                         if not (first.isdir() and first.name.startswith("ots")):  # noqa: E501
-                            from distutils.errors import DistutilsSetupError
-
-                            raise DistutilsSetupError(
+                            raise SetupError(
                                 "The downloaded archive is not recognized as a valid ots source tarball"
                             )
                         # strip the root 'ots-X.X.X' directory first
