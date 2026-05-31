@@ -78,8 +78,19 @@ def configure(reconfigure=False):
 
 
 def make(*targets, clean=False):
-    print(f"build_ots.py: Running {' '.join(NINJA_CMD)}")
     targets = list(targets)
+    if sys.platform == "win32":
+        # Build through 'meson compile' rather than invoking ninja directly: it
+        # re-activates the MSVC environment (stored by --vsenv at configure
+        # time) so cl.exe is on PATH for the compile step. Bare ninja runs in a
+        # separate process that wouldn't inherit that environment.
+        build_cmd = [TOOLS["meson"], "compile", "-C", str(BUILD_DIR)]
+        print(f"build_ots.py: Running {' '.join(build_cmd)}")
+        if clean:
+            subprocess.run(build_cmd + ["--clean"], check=True, env=os.environ)
+        subprocess.run(build_cmd + targets, check=True, env=os.environ)
+        return
+    print(f"build_ots.py: Running {' '.join(NINJA_CMD)}")
     if clean:
         subprocess.run(NINJA_CMD + ["-t", "clean"] + targets, check=True, env=os.environ)
     subprocess.run(NINJA_CMD + targets, check=True, env=os.environ)
