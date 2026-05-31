@@ -48,6 +48,10 @@ jobs:
       with:
         output-dir: dist
       env:
+        # use the 'pip' build frontend: cibuildwheel v3 defaults to
+        # 'python -m build', which (run from the project root) imports our
+        # top-level build.py instead of the pypa/build package and fails
+        CIBW_BUILD_FRONTEND: pip
         CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
         CIBW_ARCHS_MACOS: x86_64 arm64
         CIBW_ENVIRONMENT_MACOS: "CFLAGS='-arch arm64 -arch x86_64' CXXFLAGS='-arch arm64 -arch x86_64' LDFLAGS='-arch arm64 -arch x86_64'"
