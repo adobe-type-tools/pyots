@@ -27,13 +27,20 @@ TOOLS = {
     "ninja": os.environ.get("NINJA_EXE", "ninja"),
 }
 
+# On Windows there is no system zlib, so force meson to build it from the
+# subproject fallback (on Linux/macOS the system zlib is used and linked via
+# the extension's libraries=["z"]).
+FALLBACK_LIBS = "libbrotlidec,liblz4"
+if sys.platform == "win32":
+    FALLBACK_LIBS += ",zlib"
+
 MESON_CMD = [
     TOOLS["meson"],
     "--backend=ninja",
     "--buildtype=release",
     "--strip",
     "--default-library=static",
-    "--force-fallback-for=libbrotlidec,liblz4",
+    f"--force-fallback-for={FALLBACK_LIBS}",
     str(BUILD_DIR),
     str(OTS_SRC_DIR),
 ]

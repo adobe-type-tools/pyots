@@ -34,6 +34,24 @@ LZ4_TAG = "1.9.4"
 WOFF2_TAG = "1.0.2"
 
 
+IS_WINDOWS = sys.platform == "win32"
+
+
+def _find_static_lib(search_dir, base):
+    """
+    Locate a static lib produced by meson regardless of the toolchain's naming
+    convention: GCC/Clang produce 'lib<base>.a' while MSVC produces '<base>.lib'
+    (and meson may nest it in subdirectories). Returns the resolved Path.
+    """
+    candidates = [f"lib{base}.a", f"{base}.lib", f"lib{base}.lib", f"{base}.a"]
+    for name in candidates:
+        # search recursively so we don't depend on meson's exact output layout
+        matches = sorted(search_dir.rglob(name))
+        if matches:
+            return matches[0]
+    raise FileNotFoundError(f"could not find static lib for '{base}' under {search_dir} (tried {candidates})")
+
+
 def _get_extra_objects():
     """
     Create the list of 'extra_ojects' for building the extension. This is done
@@ -42,15 +60,34 @@ def _get_extra_objects():
     of the static libs generated.
     """
     # libots
-    xo = [BUILD_DIR / "libots.a"]
+    xo = [_find_static_lib(BUILD_DIR, "ots")]
 
     # brotli
     # NOTE: decoder needs to come before common!
-    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_decoder.a")
-    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_common.a")
+    brotli_dir = BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}"
+    xo.append(_find_static_lib(brotli_dir, "brotli_decoder"))
+    xo.append(_find_static_lib(brotli_dir, "brotli_common"))
 
     # lz4
-    xo.append(BUILD_SUB_DIR / f"lz4-{LZ4_TAG}" / "contrib" / "meson" / "meson" / "lib" / "liblz4.a")  # noqa: E501
+    lz4_dir = BUILD_SUB_DIR / f"lz4-{LZ4_TAG}"
+    xo.append(_find_static_lib(lz4_dir, "lz4"))
+
+    # zlib -- on Windows there's no system zlib, so meson builds it from the
+    # subproject fallback (see build.py) and we link it statically here. On
+    # Linux/macOS the system zlib is linked via libraries=["z"] instead.
+    if IS_WINDOWS:
+        zlib_dirs = sorted(BUILD_SUB_DIR.glob("zlib-*"))
+        if not zlib_dirs:
+            raise FileNotFoundError(f"could not find zlib build dir under {BUILD_SUB_DIR}")
+        # the zlib subproject may name its lib 'z' or 'zlib'
+        for base in ("zlib", "z", "zlibstatic"):
+            try:
+                xo.append(_find_static_lib(zlib_dirs[-1], base))
+                break
+            except FileNotFoundError:
+                continue
+        else:
+            raise FileNotFoundError(f"could not find zlib static lib under {zlib_dirs[-1]}")
 
     # woff2 -- skipped for now, building as part of Extension
     # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_decoder.a")
@@ -266,10 +303,18 @@ custom_commands = {
     "egg_info": CustomEggInfo,
 }
 
+if IS_WINDOWS:
+    # MSVC: no -fPIC, no system zlib (it's linked statically via extra_objects)
+    extra_compile_args = ["/std:c++14"]
+    libraries = []
+else:
+    extra_compile_args = ["-fPIC", "-std=c++11"]
+    libraries = ["z"]
+
 pyots_mod = Extension(
     name="_pyots",
-    libraries=["z"],
-    extra_compile_args=["-fPIC", "-std=c++11"],
+    libraries=libraries,
+    extra_compile_args=extra_compile_args,
     extra_objects=_get_extra_objects(),
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
