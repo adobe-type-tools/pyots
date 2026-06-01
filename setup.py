@@ -1,18 +1,25 @@
-from distutils import log
 import io
+import logging
 import os
 import re
 import shutil
 from pathlib import Path
 from setuptools import setup, Extension, Command
 from setuptools.command import build_py
+from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
+from setuptools.errors import SetupError
 import subprocess
 import sys
 
 PY = sys.executable
 
-# Define paths (previously imported from build.py)
+# distutils was removed from the stdlib in Python 3.12 (PEP 632), so use the
+# stdlib logging module instead of distutils.log for informational output
+logging.basicConfig(format="%(message)s", level=logging.INFO)
+log = logging.getLogger("pyots.setup")
+
+# Define paths (previously imported from build_ots.py)
 try:
     ROOT = Path(__file__).parent.resolve()
 except NameError:
@@ -34,6 +41,24 @@ LZ4_TAG = "1.9.4"
 WOFF2_TAG = "1.0.2"
 
 
+IS_WINDOWS = sys.platform == "win32"
+
+
+def _find_static_lib(search_dir, base):
+    """
+    Locate a static lib produced by meson regardless of the toolchain's naming
+    convention: GCC/Clang produce 'lib<base>.a' while MSVC produces '<base>.lib'
+    (and meson may nest it in subdirectories). Returns the resolved Path.
+    """
+    candidates = [f"lib{base}.a", f"{base}.lib", f"lib{base}.lib", f"{base}.a"]
+    for name in candidates:
+        # search recursively so we don't depend on meson's exact output layout
+        matches = sorted(search_dir.rglob(name))
+        if matches:
+            return matches[0]
+    raise FileNotFoundError(f"could not find static lib for '{base}' under {search_dir} (tried {candidates})")
+
+
 def _get_extra_objects():
     """
     Create the list of 'extra_ojects' for building the extension. This is done
@@ -42,15 +67,34 @@ def _get_extra_objects():
     of the static libs generated.
     """
     # libots
-    xo = [BUILD_DIR / "libots.a"]
+    xo = [_find_static_lib(BUILD_DIR, "ots")]
 
     # brotli
     # NOTE: decoder needs to come before common!
-    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_decoder.a")
-    xo.append(BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}" / "libbrotli_common.a")
+    brotli_dir = BUILD_SUB_DIR / f"brotli-{BROTLI_TAG}"
+    xo.append(_find_static_lib(brotli_dir, "brotli_decoder"))
+    xo.append(_find_static_lib(brotli_dir, "brotli_common"))
 
     # lz4
-    xo.append(BUILD_SUB_DIR / f"lz4-{LZ4_TAG}" / "contrib" / "meson" / "meson" / "lib" / "liblz4.a")  # noqa: E501
+    lz4_dir = BUILD_SUB_DIR / f"lz4-{LZ4_TAG}"
+    xo.append(_find_static_lib(lz4_dir, "lz4"))
+
+    # zlib -- on Windows there's no system zlib, so meson builds it from the
+    # subproject fallback (see build_ots.py) and we link it statically here. On
+    # Linux/macOS the system zlib is linked via libraries=["z"] instead.
+    if IS_WINDOWS:
+        zlib_dirs = sorted(BUILD_SUB_DIR.glob("zlib-*"))
+        if not zlib_dirs:
+            raise FileNotFoundError(f"could not find zlib build dir under {BUILD_SUB_DIR}")
+        # the zlib subproject may name its lib 'z' or 'zlib'
+        for base in ("zlib", "z", "zlibstatic"):
+            try:
+                xo.append(_find_static_lib(zlib_dirs[-1], base))
+                break
+            except FileNotFoundError:
+                continue
+        else:
+            raise FileNotFoundError(f"could not find zlib static lib under {zlib_dirs[-1]}")
 
     # woff2 -- skipped for now, building as part of Extension
     # xo.append(BUILD_SUB_DIR / f"woff2-{WOFF2_TAG}" / "libwoff2_decoder.a")
@@ -101,14 +145,14 @@ def _get_sources():
 
 class BuildStaticLibs(Command):
     """
-    Custom command to run build.py script prior to building Extension
+    Custom command to run build_ots.py script prior to building Extension
     """
 
     description = "Build ots static libs from source with meson/ninja"
     user_options = []
 
     def run(self):
-        cmd = [PY, "build.py"]
+        cmd = [PY, "build_ots.py"]
         subprocess.check_call(cmd)
 
     def initialize_options(self):
@@ -126,6 +170,20 @@ class BuildPy(build_py.build_py):
     def run(self):
         self.run_command("build_static")
         build_py.build_py.run(self)
+
+
+class BuildExt(build_ext):
+    """
+    Custom build_ext that resolves the static libs to link against at build
+    time. This must be deferred until here (rather than when the Extension is
+    constructed at module load) because the libs don't exist on disk until
+    build_ots.py has compiled them.
+    """
+
+    def run(self):
+        for ext in self.extensions:
+            ext.extra_objects = _get_extra_objects()
+        build_ext.run(self)
 
 
 class CustomEggInfo(egg_info):
@@ -154,14 +212,10 @@ class Download(Command):
 
     def finalize_options(self):
         if self.version is None:
-            from distutils.errors import DistutilsSetupError
-
-            raise DistutilsSetupError("must specify --version to download")
+            raise SetupError("must specify --version to download")
 
         if self.sha256 is None:
-            from distutils.errors import DistutilsSetupError
-
-            raise DistutilsSetupError("must specify --sha256 of downloaded file")
+            raise SetupError("must specify --sha256 of downloaded file")
 
         if self.download_dir is None:
             self.download_dir = "src"
@@ -201,9 +255,7 @@ class Download(Command):
                 # use hashlib to verify the SHA-256 hash
                 actual_sha256 = hashlib.sha256(f.getvalue()).hexdigest()
                 if actual_sha256 != self.sha256:
-                    from distutils.errors import DistutilsSetupError
-
-                    raise DistutilsSetupError(
+                    raise SetupError(
                         "invalid SHA-256 checksum:\nactual:   {}\nexpected: {}".format(
                             actual_sha256, self.sha256
                         )
@@ -215,9 +267,7 @@ class Download(Command):
                         filelist = tar.getmembers()
                         first = filelist[0]
                         if not (first.isdir() and first.name.startswith("ots")):  # noqa: E501
-                            from distutils.errors import DistutilsSetupError
-
-                            raise DistutilsSetupError(
+                            raise SetupError(
                                 "The downloaded archive is not recognized as a valid ots source tarball"
                             )
                         # strip the root 'ots-X.X.X' directory first
@@ -261,16 +311,26 @@ class Download(Command):
 
 custom_commands = {
     "build_py": BuildPy,
+    "build_ext": BuildExt,
     "build_static": BuildStaticLibs,
     "download": Download,
     "egg_info": CustomEggInfo,
 }
 
+if IS_WINDOWS:
+    # MSVC: no -fPIC, no system zlib (it's linked statically via extra_objects)
+    extra_compile_args = ["/std:c++14"]
+    libraries = []
+else:
+    extra_compile_args = ["-fPIC", "-std=c++11"]
+    libraries = ["z"]
+
 pyots_mod = Extension(
     name="_pyots",
-    libraries=["z"],
-    extra_compile_args=["-fPIC", "-std=c++11"],
-    extra_objects=_get_extra_objects(),
+    libraries=libraries,
+    extra_compile_args=extra_compile_args,
+    # extra_objects is populated at build time by BuildExt, once build_ots.py has
+    # compiled the static libs
     include_dirs=_get_include_dirs(),
     sources=_get_sources(),
 )

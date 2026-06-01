@@ -15,7 +15,10 @@ import pyots
 try:
     import ots
 
-    have_ots = True
+    # the pyots wheel bundles a top-level 'ots' package (the OTS source subset),
+    # so a bare 'import ots' can succeed even when the opentype-sanitizer package
+    # isn't installed; check for its sanitize() to confirm it's the real thing.
+    have_ots = hasattr(ots, "sanitize")
 except ImportError:
     have_ots = False
 

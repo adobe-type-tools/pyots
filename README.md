@@ -4,14 +4,14 @@
 
 ![PyPI](https://img.shields.io/pypi/v/pyots) [![PyPI](https://img.shields.io/pypi/pyversions/pyots)](https://pypi.org/project/pyots/)
 
-![macOS](https://img.shields.io/badge/-macOS-lightgrey) ![ubuntu](https://img.shields.io/badge/-ubuntu-lightgrey)
+![macOS](https://img.shields.io/badge/-macOS-lightgrey) ![ubuntu](https://img.shields.io/badge/-ubuntu-lightgrey) ![windows](https://img.shields.io/badge/-windows-lightgrey)
 
 Python wrapper for [OpenType Sanitizer](https://github.com/khaledhosny/ots), also known as just "OTS". It is similar to and partially based on [ots-python](https://github.com/googlefonts/ots-python), but builds OTS as a Python C Extension (instead of as an executable and calling through `subprocess` as ots-python does).
 
 **NOTE:** Although this package is similar to **ots-python**, it is _not_ a drop-in replacement for it, as the Python API is different.
 
 ## Requirements
-The project builds `pip`-installable wheels for Python 3.10, 3.11, 3.12, 3.13, or 3.14 under Mac or Linux. It is possible this project will build and run with other Pythons and other operating systems, but it has only been tested with the listed configurations.
+The project builds `pip`-installable wheels for Python 3.10, 3.11, 3.12, 3.13, or 3.14 under Mac, Linux, or Windows. It is possible this project will build and run with other Pythons and other operating systems, but it has only been tested with the listed configurations.
 
 ## Installation with `pip`
 If you just want to _use_ `pyots`, you can simply run `python -m pip install -U pyots` (in one of the supported platforms/Python versions) which will install pre-built, compiled, ready-to-use Python wheels. Then you can skip down to the [Use](#Use) section.

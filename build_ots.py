@@ -27,18 +27,34 @@ TOOLS = {
     "ninja": os.environ.get("NINJA_EXE", "ninja"),
 }
 
+# On Windows there is no system zlib, so force meson to build it from the
+# subproject fallback (on Linux/macOS the system zlib is used and linked via
+# the extension's libraries=["z"]).
+FALLBACK_LIBS = "libbrotlidec,liblz4"
+
+# On Windows force meson to activate the Visual Studio (MSVC) environment via
+# its built-in vswhere/vcvars detection. Without --vsenv, meson would pick up
+# the gcc/clang that GitHub's windows runners ship on PATH, producing static
+# libs with a different ABI than the MSVC-built extension. --vsenv makes meson
+# find cl.exe itself, so no external MSVC-setup action is needed.
+WIN_MESON_ARGS = []
+if sys.platform == "win32":
+    FALLBACK_LIBS += ",zlib"
+    WIN_MESON_ARGS = ["--vsenv"]
+
 MESON_CMD = [
     TOOLS["meson"],
     "--backend=ninja",
     "--buildtype=release",
     "--strip",
     "--default-library=static",
-    "--force-fallback-for=libbrotlidec,liblz4",
+    f"--force-fallback-for={FALLBACK_LIBS}",
+    *WIN_MESON_ARGS,
     str(BUILD_DIR),
     str(OTS_SRC_DIR),
 ]
 
-NINJA_CMD = [TOOLS["ninja"], "-C", str(BUILD_DIR)]
+MESON_COMPILE_CMD = [TOOLS["meson"], "compile", "-C", str(BUILD_DIR)]
 
 
 class ExecutableNotFound(FileNotFoundError):
@@ -54,7 +70,7 @@ def check_tools():
 
 
 def configure(reconfigure=False):
-    print(f"build.py: Running {' '.join(MESON_CMD)}")
+    print(f"build_ots.py: Running {' '.join(MESON_CMD)}")
     if not (BUILD_DIR / "build.ninja").exists():
         subprocess.run(MESON_CMD, check=True, env=os.environ)
     elif reconfigure:
@@ -62,11 +78,15 @@ def configure(reconfigure=False):
 
 
 def make(*targets, clean=False):
-    print(f"build.py: Running {' '.join(NINJA_CMD)}")
+    # Build through 'meson compile' rather than invoking ninja directly. On
+    # Windows this re-activates the MSVC environment (stored by --vsenv at
+    # configure time) so cl.exe is on PATH for the compile step; on other
+    # platforms it simply drives the ninja backend.
     targets = list(targets)
+    print(f"build_ots.py: Running {' '.join(MESON_COMPILE_CMD)}")
     if clean:
-        subprocess.run(NINJA_CMD + ["-t", "clean"] + targets, check=True, env=os.environ)
-    subprocess.run(NINJA_CMD + targets, check=True, env=os.environ)
+        subprocess.run(MESON_COMPILE_CMD + ["--clean"], check=True, env=os.environ)
+    subprocess.run(MESON_COMPILE_CMD + targets, check=True, env=os.environ)
 
 
 def main(args=None):
