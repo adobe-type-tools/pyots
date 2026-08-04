@@ -32,7 +32,8 @@ If you wish to run tests comparing results from `ots-python` against `pyots`, be
 Simplest case:
 ```python
 import pyots
-result = pyots.sanitize('/path/to/font/file.ttf')
+
+result = pyots.sanitize("/path/to/font/file.ttf")
 ```
 
 `result` is an `OTSResult` object with 3 attributes:
@@ -51,7 +52,7 @@ from pathlib import Path
 for filename in Path("src/ots/tests/fonts/good").rglob("*"):
     result = pyots.sanitize(filename.absolute())
     if not result.sanitized:
-        print(f'{filename}:\n{", ".join([m for m in result.messages])}')
+        print(f"{filename}:\n{', '.join([m for m in result.messages])}")
 ```
 
 ### Options for `sanitize()`
