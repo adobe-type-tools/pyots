@@ -3,14 +3,16 @@ import logging
 import os
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
-from setuptools import setup, Extension, Command
+from typing import ClassVar
+
+from setuptools import Command, Extension, setup
 from setuptools.command import build_py
 from setuptools.command.build_ext import build_ext
 from setuptools.command.egg_info import egg_info
 from setuptools.errors import SetupError
-import subprocess
-import sys
 
 PY = sys.executable
 
@@ -135,7 +137,7 @@ def _get_sources():
 
     # woff2 sources
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "table_tags.cc")
-    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")  # noqa: E501
+    sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "variable_length.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_common.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_dec.cc")
     sp.append(SRC_SUB_DIR / f"woff2-{WOFF2_TAG}" / "src" / "woff2_out.cc")
@@ -149,7 +151,7 @@ class BuildStaticLibs(Command):
     """
 
     description = "Build ots static libs from source with meson/ninja"
-    user_options = []
+    user_options: ClassVar[list] = []
 
     def run(self):
         cmd = [PY, "build_ots.py"]
@@ -194,13 +196,13 @@ class CustomEggInfo(egg_info):
 
 
 class Download(Command):
-    user_options = [
+    user_options: ClassVar[list] = [
         ("version=", None, "ots source version number to download"),
         ("sha256=", None, "expected SHA-256 hash of the source archive"),
         ("download-dir=", "d", "where to unpack the 'ots' dir (default: src)"),
         ("clean", None, "remove existing directory before downloading"),
     ]
-    boolean_options = ["clean"]
+    boolean_options: ClassVar[list] = ["clean"]
 
     URL_TEMPLATE = "https://github.com/khaledhosny/ots/releases/download/v{version}/ots-{version}.tar.xz"
 
@@ -223,27 +225,27 @@ class Download(Command):
         self.url = self.URL_TEMPLATE.format(**vars(self))
 
     def run(self):
-        from urllib.request import urlopen
-        import tarfile
-        import lzma
         import hashlib
+        import lzma
+        import tarfile
+        from urllib.request import urlopen
 
         output_dir = os.path.join(self.download_dir, "ots")
         if self.clean and os.path.isdir(output_dir):
-            log.info("removing '{}'".format(output_dir))
+            log.info(f"removing '{output_dir}'")
             if not self.dry_run:
                 shutil.rmtree(output_dir)
 
         if os.path.isdir(output_dir):
-            log.info("{} was already downloaded".format(output_dir))
+            log.info(f"{output_dir} was already downloaded")
         else:
             archive_name = self.url.rsplit("/", 1)[-1]
 
-            log.info("creating '{}'".format(self.download_dir))
+            log.info(f"creating '{self.download_dir}'")
             if not self.dry_run:
                 os.makedirs(self.download_dir, exist_ok=True)
 
-            log.info("downloading {}".format(self.url))
+            log.info(f"downloading {self.url}")
             if not self.dry_run:
                 # response is not seekable so we first download *.tar.xz to an
                 # in-memory file, and then extract all files to the output_dir
@@ -256,28 +258,25 @@ class Download(Command):
                 actual_sha256 = hashlib.sha256(f.getvalue()).hexdigest()
                 if actual_sha256 != self.sha256:
                     raise SetupError(
-                        "invalid SHA-256 checksum:\nactual:   {}\nexpected: {}".format(
-                            actual_sha256, self.sha256
-                        )
+                        f"invalid SHA-256 checksum:\nactual:   {actual_sha256}\nexpected: {self.sha256}"
                     )
 
-                log.info("unarchiving {} to {}".format(archive_name, output_dir))
-                with lzma.open(f) as xz:
-                    with tarfile.open(fileobj=xz) as tar:
-                        filelist = tar.getmembers()
-                        first = filelist[0]
-                        if not (first.isdir() and first.name.startswith("ots")):  # noqa: E501
-                            raise SetupError(
-                                "The downloaded archive is not recognized as a valid ots source tarball"
-                            )
-                        # strip the root 'ots-X.X.X' directory first
-                        rootdir = first.name + "/"
-                        to_extract = []
-                        for member in filelist[1:]:
-                            if member.name.startswith(rootdir):
-                                member.name = member.name[len(rootdir) :]
-                                to_extract.append(member)
-                        tar.extractall(output_dir, members=to_extract)
+                log.info(f"unarchiving {archive_name} to {output_dir}")
+                with lzma.open(f) as xz, tarfile.open(fileobj=xz) as tar:
+                    filelist = tar.getmembers()
+                    first = filelist[0]
+                    if not (first.isdir() and first.name.startswith("ots")):
+                        raise SetupError(
+                            "The downloaded archive is not recognized as a valid ots source tarball"
+                        )
+                    # strip the root 'ots-X.X.X' directory first
+                    rootdir = first.name + "/"
+                    to_extract = []
+                    for member in filelist[1:]:
+                        if member.name.startswith(rootdir):
+                            member.name = member.name[len(rootdir) :]
+                            to_extract.append(member)
+                    tar.extractall(output_dir, members=to_extract)
 
             log.info("writing custom meson.build")
 

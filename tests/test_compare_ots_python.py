@@ -5,8 +5,8 @@
 """
 
 import functools
-from pathlib import Path
 import timeit
+from pathlib import Path
 
 import pytest
 
@@ -85,7 +85,7 @@ def cmp_times():
         "pyots": functools.partial(pyots.sanitize, quiet=False),
         "ots-python": functools.partial(ots.sanitize, capture_output=True),
     }
-    rd = {k: 0.0 for k in fd.keys()}
+    rd = {k: 0.0 for k in fd}
 
     for name, sanitize_method in fd.items():
         start = timeit.default_timer()

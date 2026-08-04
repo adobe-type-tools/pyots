@@ -3,13 +3,13 @@
 Run meson and ninja to build the ots static libs from source.
 """
 
+import argparse
+import errno
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
-import os
-import subprocess
-import shutil
-import errno
-import argparse
 
 ROOT = Path(__file__).parent.resolve()
 BUILD_ROOT = ROOT / "src" / "ots" / "build"
