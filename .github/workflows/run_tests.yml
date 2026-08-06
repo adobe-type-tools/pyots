@@ -46,8 +46,8 @@ jobs:
 
     - name: Download OTS source
       run: |
-        python setup.py download --version=9.2.0 --sha256=1a1e50cd7ecea27c4ef04c5b1491c21e75555f35bf91e27103ede04ddd11e053
-    
+        python setup.py download --version=9.3.0 --sha256=23814f8e90ee77379f54e86a012c09bba2d133940e5257546b29cf087a73beec
+
     - name: Lint with ruff
       run: ruff check .
 
@@ -87,7 +87,7 @@ jobs:
 
     - name: Download OTS source
       run: |
-        python setup.py download --version=9.2.0 --sha256=1a1e50cd7ecea27c4ef04c5b1491c21e75555f35bf91e27103ede04ddd11e053
+        python setup.py download --version=9.3.0 --sha256=23814f8e90ee77379f54e86a012c09bba2d133940e5257546b29cf087a73beec
 
     - name: Build and install
       run: |
