@@ -39,7 +39,7 @@ SRC_SUB_DIR = OTS_SRC_DIR / "subprojects"
 # release of ots has something that causes this build to break anyway so it's
 # not really that urgent. We just have to adjust every release.
 BROTLI_TAG = "1.1.0"
-LZ4_TAG = "1.9.4"
+LZ4_TAG = "1.10.0"
 WOFF2_TAG = "1.0.2"
 
 

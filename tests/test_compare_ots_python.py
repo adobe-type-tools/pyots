@@ -4,8 +4,11 @@
 (opentype-sanitizer/ots) is not installed.
 """
 
+import configparser
 import functools
 import timeit
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 
 import pytest
@@ -26,6 +29,31 @@ ROOT = Path(__file__).parent.parent.resolve()
 TEST_FONTS_DIR = ROOT / "src" / "ots" / "tests" / "fonts"
 
 
+def _ots_versions_match():
+    """
+    The comparison tests assert byte-identical messages between pyots and
+    ots-python, which only holds when both wrap the same OTS version. pyots
+    targets the version pinned in setup.cfg, while ots-python's package version
+    is its bundled OTS version. Skip the comparison when they differ (e.g. when
+    pyots is ahead of the latest opentype-sanitizer release), since the messages
+    legitimately diverge on OTS behavior changes.
+    """
+    if not have_ots:
+        return False
+    cfg = configparser.ConfigParser()
+    cfg.read(ROOT / "setup.cfg")
+    target = cfg.get("download", "version", fallback=None)
+    try:
+        installed = pkg_version("opentype-sanitizer")
+    except PackageNotFoundError:
+        return False
+    return target is not None and target == installed
+
+
+versions_match = _ots_versions_match()
+SKIP_REASON = "ots-python not installed or its OTS version differs from pyots's target"
+
+
 def _get_ots_result(path):
     """
     Sanitize with ots-python and process the result.
@@ -42,7 +70,7 @@ def _get_pyots_result(path):
     return pyots.sanitize(path)
 
 
-@pytest.mark.skipif(not have_ots, reason="ots-python not installed")
+@pytest.mark.skipif(not versions_match, reason=SKIP_REASON)
 def test_compare_good():
     tld = TEST_FONTS_DIR / "good"
 
@@ -53,7 +81,7 @@ def test_compare_good():
         assert otsp_result.messages == pyots_result.messages, f"[good] mismatched messages for {f}"
 
 
-@pytest.mark.skipif(not have_ots, reason="ots-python not available")
+@pytest.mark.skipif(not versions_match, reason=SKIP_REASON)
 def test_compare_bad():
     tld = TEST_FONTS_DIR / "bad"
 
@@ -64,7 +92,7 @@ def test_compare_bad():
         assert otsp_result.messages == pyots_result.messages, f"[bad] mismatched messages for {f}"
 
 
-@pytest.mark.skipif(not have_ots, reason="ots-python not available")
+@pytest.mark.skipif(not versions_match, reason=SKIP_REASON)
 def test_compare_fuzzing():
     tld = TEST_FONTS_DIR / "fuzzing"
 
