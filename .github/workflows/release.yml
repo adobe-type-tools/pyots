@@ -106,7 +106,7 @@ jobs:
         skip-existing: true  # don't fail if a filename was already uploaded
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+      uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
       with:
         body: '${{ steps.date_tag.outputs.VERSION }} released ${{ steps.date_tag.outputs.TODAY }} - [Upstream OTS v${{ steps.date_tag.outputs.VERSION }} Release Notes](https://github.com/khaledhosny/ots/releases/tag/v${{ steps.date_tag.outputs.VERSION }})'
         prerelease: true
